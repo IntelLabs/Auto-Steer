@@ -1,0 +1,7 @@
+optimize_hash_generation
+pick_table_layout_for_predicate
+prune_crossjoin_columns
+prune_filter_columns
+prune_tablescan_columns
+simplify_expressions
+unalias_symbol_references

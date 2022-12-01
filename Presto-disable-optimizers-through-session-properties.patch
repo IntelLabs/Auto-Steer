@@ -1,0 +1,414 @@
+From f138aa8a047e81538659967dc117c85fe3d8caba Mon Sep 17 00:00:00 2001
+From: Christoph Anneser <anneser@in.tum.de>
+Date: Sun, 30 Oct 2022 19:56:20 +0100
+Subject: [PATCH] update presto knobs
+
+---
+ .../presto/SystemSessionProperties.java       | 66 ++++++++++++++++
+ .../presto/sql/analyzer/FeaturesConfig.java   | 78 +++++++++++++++++++
+ .../iterative/rule/PickTableLayout.java       |  3 +-
+ .../iterative/rule/PruneCrossJoinColumns.java |  8 ++
+ .../iterative/rule/PruneFilterColumns.java    |  8 ++
+ .../iterative/rule/PruneTableScanColumns.java |  8 ++
+ .../iterative/rule/SimplifyExpressions.java   | 22 +++---
+ .../UnaliasSymbolReferences.java              |  6 +-
+ .../sql/analyzer/TestFeaturesConfig.java      | 18 +++++
+ 9 files changed, 206 insertions(+), 11 deletions(-)
+
+diff --git a/presto-main/src/main/java/com/facebook/presto/SystemSessionProperties.java b/presto-main/src/main/java/com/facebook/presto/SystemSessionProperties.java
+index f8eea8c97a..df98d07223 100644
+--- a/presto-main/src/main/java/com/facebook/presto/SystemSessionProperties.java
++++ b/presto-main/src/main/java/com/facebook/presto/SystemSessionProperties.java
+@@ -75,6 +75,12 @@ import static java.util.stream.Collectors.joining;
+ public final class SystemSessionProperties
+ {
+     public static final String OPTIMIZE_HASH_GENERATION = "optimize_hash_generation";
++    public static final String PICK_TABLE_LAYOUT_FOR_PREDICATE = "pick_table_layout_for_predicate";
++    public static final String PRUNE_CROSSJOIN_COLUMNS = "prune_crossjoin_columns";
++    public static final String PRUNE_FILTER_COLUMNS = "prune_filter_columns";
++    public static final String PRUNE_TABLESCAN_COLUMNS = "prune_tablescan_columns";
++    public static final String SIMPLIFY_EXPRESSIONS = "simplify_expressions";
++    public static final String UNALIAS_SYMBOL_REFERENCES = "unalias_symbol_references";
+     public static final String JOIN_DISTRIBUTION_TYPE = "join_distribution_type";
+     public static final String JOIN_MAX_BROADCAST_TABLE_SIZE = "join_max_broadcast_table_size";
+     public static final String SIZE_BASED_JOIN_DISTRIBUTION_TYPE = "size_based_join_distribution_type";
+@@ -301,6 +307,36 @@ public final class SystemSessionProperties
+                         "Compute hash codes for distribution, joins, and aggregations early in query plan",
+                         featuresConfig.isOptimizeHashGeneration(),
+                         false),
++                booleanProperty(
++                        PICK_TABLE_LAYOUT_FOR_PREDICATE,
++                        "todo",
++                        featuresConfig.isPickTableLayoutForPredicate(),
++                        false),
++                booleanProperty(
++                        PRUNE_CROSSJOIN_COLUMNS,
++                        "todo",
++                        featuresConfig.isPruneCrossJoinColumns(),
++                        false),
++                booleanProperty(
++                        PRUNE_FILTER_COLUMNS,
++                        "todo",
++                        featuresConfig.isPruneFilterColumns(),
++                        false),
++                booleanProperty(
++                        PRUNE_TABLESCAN_COLUMNS,
++                        "todo",
++                        featuresConfig.isPruneTableScanColumns(),
++                        false),
++                booleanProperty(
++                        SIMPLIFY_EXPRESSIONS,
++                        "todo",
++                        featuresConfig.isSimplifyExpressions(),
++                        false),
++                booleanProperty(
++                        UNALIAS_SYMBOL_REFERENCES,
++                        "todo",
++                        featuresConfig.isUnaliasSymbolReferences(),
++                        false),
+                 booleanProperty(
+                         DISTRIBUTED_JOIN,
+                         "(DEPRECATED) Use a distributed join instead of a broadcast join. If this is set, join_distribution_type is ignored.",
+@@ -1478,6 +1514,36 @@ public final class SystemSessionProperties
+         return session.getSystemProperty(OPTIMIZE_HASH_GENERATION, Boolean.class);
+     }
+ 
++    public static boolean isUnaliasSymbolReferences(Session session)
++    {
++        return session.getSystemProperty(UNALIAS_SYMBOL_REFERENCES, Boolean.class);
++    }
++
++    public static boolean isPickTableLayoutForPredicate(Session session)
++    {
++        return session.getSystemProperty(PICK_TABLE_LAYOUT_FOR_PREDICATE, Boolean.class);
++    }
++
++    public static boolean isPruneTableScanColumns(Session session)
++    {
++        return session.getSystemProperty(PRUNE_TABLESCAN_COLUMNS, Boolean.class);
++    }
++
++    public static boolean isPruneFilterColumns(Session session)
++    {
++        return session.getSystemProperty(PRUNE_FILTER_COLUMNS, Boolean.class);
++    }
++
++    public static boolean isPruneCrossJoinColumns(Session session)
++    {
++        return session.getSystemProperty(PRUNE_CROSSJOIN_COLUMNS, Boolean.class);
++    }
++
++    public static boolean isSimplifyExpressions(Session session)
++    {
++        return session.getSystemProperty(SIMPLIFY_EXPRESSIONS, Boolean.class);
++    }
++
+     public static JoinDistributionType getJoinDistributionType(Session session)
+     {
+         // distributed_join takes precedence until we remove it
+diff --git a/presto-main/src/main/java/com/facebook/presto/sql/analyzer/FeaturesConfig.java b/presto-main/src/main/java/com/facebook/presto/sql/analyzer/FeaturesConfig.java
+index f8573630c5..dae93ea610 100644
+--- a/presto-main/src/main/java/com/facebook/presto/sql/analyzer/FeaturesConfig.java
++++ b/presto-main/src/main/java/com/facebook/presto/sql/analyzer/FeaturesConfig.java
+@@ -97,6 +97,12 @@ public class FeaturesConfig
+     private boolean optimizeMetadataQueriesIgnoreStats;
+     private int optimizeMetadataQueriesCallThreshold = 100;
+     private boolean optimizeHashGeneration = true;
++    private boolean unaliasSymbolReferences = true;
++    private boolean pickTableLayoutForPredicate = true;
++    private boolean pruneTableScanColumns = true;
++    private boolean pruneFilterColumns = true;
++    private boolean simplifyExpressions = true;
++    private boolean pruneCrossJoinColumns = true;
+     private boolean enableIntermediateAggregations;
+     private boolean optimizeCaseExpressionPredicate;
+     private boolean pushTableWriteThroughUnion = true;
+@@ -961,6 +967,78 @@ public class FeaturesConfig
+         return this;
+     }
+ 
++    public boolean isUnaliasSymbolReferences()
++    {
++        return unaliasSymbolReferences;
++    }
++
++    @Config("optimizer.unalias-symbol-references")
++    public FeaturesConfig setUnaliasSymbolReferences(boolean unaliasSymbolReferences)
++    {
++        this.unaliasSymbolReferences = unaliasSymbolReferences;
++        return this;
++    }
++
++    public boolean isPickTableLayoutForPredicate()
++    {
++        return pickTableLayoutForPredicate;
++    }
++
++    @Config("optimizer.pick-table-layout-for-predicate")
++    public FeaturesConfig setPickTableLayoutForPredicate(boolean pickTableLayoutForPredicate)
++    {
++        this.pickTableLayoutForPredicate = pickTableLayoutForPredicate;
++        return this;
++    }
++
++    public boolean isPruneTableScanColumns()
++    {
++        return pruneTableScanColumns;
++    }
++
++    @Config("optimizer.prune-table-scan-columns")
++    public FeaturesConfig setPruneTableScanColumns(boolean pruneTableScanColumns)
++    {
++        this.pruneTableScanColumns = pruneTableScanColumns;
++        return this;
++    }
++
++    public boolean isPruneFilterColumns()
++    {
++        return pruneFilterColumns;
++    }
++
++    @Config("optimizer.prune-filter-columns")
++    public FeaturesConfig setPruneFilterColumns(boolean pruneFilterColumns)
++    {
++        this.pruneFilterColumns = pruneFilterColumns;
++        return this;
++    }
++
++    public boolean isSimplifyExpressions()
++    {
++        return simplifyExpressions;
++    }
++
++    @Config("optimizer.simplify-expressions")
++    public FeaturesConfig setSimplifyExpressions(boolean simplifyExpressions)
++    {
++        this.simplifyExpressions = simplifyExpressions;
++        return this;
++    }
++
++    public boolean isPruneCrossJoinColumns()
++    {
++        return pruneCrossJoinColumns;
++    }
++
++    @Config("optimizer.prune-cross-join-columns")
++    public FeaturesConfig setPruneCrossJoinColumns(boolean pruneCrossJoinColumns)
++    {
++        this.pruneCrossJoinColumns = pruneCrossJoinColumns;
++        return this;
++    }
++
+     public boolean isPushTableWriteThroughUnion()
+     {
+         return pushTableWriteThroughUnion;
+diff --git a/presto-main/src/main/java/com/facebook/presto/sql/planner/iterative/rule/PickTableLayout.java b/presto-main/src/main/java/com/facebook/presto/sql/planner/iterative/rule/PickTableLayout.java
+index 73846eadbb..3242cde649 100644
+--- a/presto-main/src/main/java/com/facebook/presto/sql/planner/iterative/rule/PickTableLayout.java
++++ b/presto-main/src/main/java/com/facebook/presto/sql/planner/iterative/rule/PickTableLayout.java
+@@ -14,6 +14,7 @@
+ package com.facebook.presto.sql.planner.iterative.rule;
+ 
+ import com.facebook.presto.Session;
++import com.facebook.presto.SystemSessionProperties;
+ import com.facebook.presto.common.predicate.NullableValue;
+ import com.facebook.presto.common.predicate.TupleDomain;
+ import com.facebook.presto.expressions.LogicalRowExpressions;
+@@ -123,7 +124,7 @@ public class PickTableLayout
+         @Override
+         public boolean isEnabled(Session session)
+         {
+-            return isNewOptimizerEnabled(session);
++            return isNewOptimizerEnabled(session) && SystemSessionProperties.isPickTableLayoutForPredicate(session);
+         }
+ 
+         @Override
+diff --git a/presto-main/src/main/java/com/facebook/presto/sql/planner/iterative/rule/PruneCrossJoinColumns.java b/presto-main/src/main/java/com/facebook/presto/sql/planner/iterative/rule/PruneCrossJoinColumns.java
+index 1d89b3e217..4edb9cabcd 100644
+--- a/presto-main/src/main/java/com/facebook/presto/sql/planner/iterative/rule/PruneCrossJoinColumns.java
++++ b/presto-main/src/main/java/com/facebook/presto/sql/planner/iterative/rule/PruneCrossJoinColumns.java
+@@ -13,6 +13,8 @@
+  */
+ package com.facebook.presto.sql.planner.iterative.rule;
+ 
++import com.facebook.presto.Session;
++import com.facebook.presto.SystemSessionProperties;
+ import com.facebook.presto.spi.plan.PlanNode;
+ import com.facebook.presto.spi.plan.PlanNodeIdAllocator;
+ import com.facebook.presto.spi.relation.VariableReferenceExpression;
+@@ -37,6 +39,12 @@ public class PruneCrossJoinColumns
+         super(join().matching(JoinNode::isCrossJoin));
+     }
+ 
++    @Override
++    public boolean isEnabled(Session session)
++    {
++        return SystemSessionProperties.isPruneCrossJoinColumns(session);
++    }
++
+     @Override
+     protected Optional<PlanNode> pushDownProjectOff(PlanNodeIdAllocator idAllocator, PlanVariableAllocator variableAllocator, JoinNode joinNode, Set<VariableReferenceExpression> referencedOutputs)
+     {
+diff --git a/presto-main/src/main/java/com/facebook/presto/sql/planner/iterative/rule/PruneFilterColumns.java b/presto-main/src/main/java/com/facebook/presto/sql/planner/iterative/rule/PruneFilterColumns.java
+index 6dc5ae09b3..9ff7775442 100644
+--- a/presto-main/src/main/java/com/facebook/presto/sql/planner/iterative/rule/PruneFilterColumns.java
++++ b/presto-main/src/main/java/com/facebook/presto/sql/planner/iterative/rule/PruneFilterColumns.java
+@@ -13,6 +13,8 @@
+  */
+ package com.facebook.presto.sql.planner.iterative.rule;
+ 
++import com.facebook.presto.Session;
++import com.facebook.presto.SystemSessionProperties;
+ import com.facebook.presto.spi.plan.FilterNode;
+ import com.facebook.presto.spi.plan.PlanNode;
+ import com.facebook.presto.spi.plan.PlanNodeIdAllocator;
+@@ -37,6 +39,12 @@ public class PruneFilterColumns
+         super(filter());
+     }
+ 
++    @Override
++    public boolean isEnabled(Session session)
++    {
++        return SystemSessionProperties.isPruneFilterColumns(session);
++    }
++
+     @Override
+     protected Optional<PlanNode> pushDownProjectOff(PlanNodeIdAllocator idAllocator, PlanVariableAllocator variableAllocator, FilterNode filterNode, Set<VariableReferenceExpression> referencedOutputs)
+     {
+diff --git a/presto-main/src/main/java/com/facebook/presto/sql/planner/iterative/rule/PruneTableScanColumns.java b/presto-main/src/main/java/com/facebook/presto/sql/planner/iterative/rule/PruneTableScanColumns.java
+index ec0f875273..908edde306 100644
+--- a/presto-main/src/main/java/com/facebook/presto/sql/planner/iterative/rule/PruneTableScanColumns.java
++++ b/presto-main/src/main/java/com/facebook/presto/sql/planner/iterative/rule/PruneTableScanColumns.java
+@@ -13,6 +13,8 @@
+  */
+ package com.facebook.presto.sql.planner.iterative.rule;
+ 
++import com.facebook.presto.Session;
++import com.facebook.presto.SystemSessionProperties;
+ import com.facebook.presto.spi.plan.PlanNode;
+ import com.facebook.presto.spi.plan.PlanNodeIdAllocator;
+ import com.facebook.presto.spi.plan.TableScanNode;
+@@ -34,6 +36,12 @@ public class PruneTableScanColumns
+         super(tableScan());
+     }
+ 
++    @Override
++    public boolean isEnabled(Session session)
++    {
++        return SystemSessionProperties.isPruneTableScanColumns(session);
++    }
++
+     @Override
+     protected Optional<PlanNode> pushDownProjectOff(PlanNodeIdAllocator idAllocator, PlanVariableAllocator variableAllocator, TableScanNode tableScanNode, Set<VariableReferenceExpression> referencedOutputs)
+     {
+diff --git a/presto-main/src/main/java/com/facebook/presto/sql/planner/iterative/rule/SimplifyExpressions.java b/presto-main/src/main/java/com/facebook/presto/sql/planner/iterative/rule/SimplifyExpressions.java
+index 75edd92737..10258b23d1 100644
+--- a/presto-main/src/main/java/com/facebook/presto/sql/planner/iterative/rule/SimplifyExpressions.java
++++ b/presto-main/src/main/java/com/facebook/presto/sql/planner/iterative/rule/SimplifyExpressions.java
+@@ -14,6 +14,7 @@
+ package com.facebook.presto.sql.planner.iterative.rule;
+ 
+ import com.facebook.presto.Session;
++import com.facebook.presto.SystemSessionProperties;
+ import com.facebook.presto.common.type.Type;
+ import com.facebook.presto.metadata.Metadata;
+ import com.facebook.presto.spi.WarningCollector;
+@@ -44,16 +45,19 @@ public class SimplifyExpressions
+     @VisibleForTesting
+     static Expression rewrite(Expression expression, Session session, PlanVariableAllocator variableAllocator, Metadata metadata, LiteralEncoder literalEncoder, SqlParser sqlParser)
+     {
+-        requireNonNull(metadata, "metadata is null");
+-        requireNonNull(sqlParser, "sqlParser is null");
+-        if (expression instanceof SymbolReference) {
+-            return expression;
++        if (SystemSessionProperties.isSimplifyExpressions(session)) {
++            requireNonNull(metadata, "metadata is null");
++            requireNonNull(sqlParser, "sqlParser is null");
++            if (expression instanceof SymbolReference) {
++                return expression;
++            }
++            expression = pushDownNegations(expression);
++            expression = extractCommonPredicates(expression);
++            Map<NodeRef<Expression>, Type> expressionTypes = getExpressionTypes(session, metadata, sqlParser, variableAllocator.getTypes(), expression, emptyMap(), WarningCollector.NOOP);
++            ExpressionInterpreter interpreter = ExpressionInterpreter.expressionOptimizer(expression, metadata, session, expressionTypes);
++            return literalEncoder.toExpression(interpreter.optimize(NoOpVariableResolver.INSTANCE), expressionTypes.get(NodeRef.of(expression)));
+         }
+-        expression = pushDownNegations(expression);
+-        expression = extractCommonPredicates(expression);
+-        Map<NodeRef<Expression>, Type> expressionTypes = getExpressionTypes(session, metadata, sqlParser, variableAllocator.getTypes(), expression, emptyMap(), WarningCollector.NOOP);
+-        ExpressionInterpreter interpreter = ExpressionInterpreter.expressionOptimizer(expression, metadata, session, expressionTypes);
+-        return literalEncoder.toExpression(interpreter.optimize(NoOpVariableResolver.INSTANCE), expressionTypes.get(NodeRef.of(expression)));
++        return expression;
+     }
+ 
+     public SimplifyExpressions(Metadata metadata, SqlParser sqlParser)
+diff --git a/presto-main/src/main/java/com/facebook/presto/sql/planner/optimizations/UnaliasSymbolReferences.java b/presto-main/src/main/java/com/facebook/presto/sql/planner/optimizations/UnaliasSymbolReferences.java
+index 808c8e4edb..f81ae39148 100644
+--- a/presto-main/src/main/java/com/facebook/presto/sql/planner/optimizations/UnaliasSymbolReferences.java
++++ b/presto-main/src/main/java/com/facebook/presto/sql/planner/optimizations/UnaliasSymbolReferences.java
+@@ -14,6 +14,7 @@
+ package com.facebook.presto.sql.planner.optimizations;
+ 
+ import com.facebook.presto.Session;
++import com.facebook.presto.SystemSessionProperties;
+ import com.facebook.presto.common.block.SortOrder;
+ import com.facebook.presto.metadata.FunctionAndTypeManager;
+ import com.facebook.presto.spi.WarningCollector;
+@@ -135,7 +136,10 @@ public class UnaliasSymbolReferences
+         requireNonNull(variableAllocator, "variableAllocator is null");
+         requireNonNull(idAllocator, "idAllocator is null");
+ 
+-        return SimplePlanRewriter.rewriteWith(new Rewriter(types, functionAndTypeManager, warningCollector), plan);
++        if (SystemSessionProperties.isUnaliasSymbolReferences(session)) {
++            return SimplePlanRewriter.rewriteWith(new Rewriter(types, functionAndTypeManager, warningCollector), plan);
++        }
++        return plan;
+     }
+ 
+     private static class Rewriter
+diff --git a/presto-main/src/test/java/com/facebook/presto/sql/analyzer/TestFeaturesConfig.java b/presto-main/src/test/java/com/facebook/presto/sql/analyzer/TestFeaturesConfig.java
+index 98a17bfd14..58ec503908 100644
+--- a/presto-main/src/test/java/com/facebook/presto/sql/analyzer/TestFeaturesConfig.java
++++ b/presto-main/src/test/java/com/facebook/presto/sql/analyzer/TestFeaturesConfig.java
+@@ -85,6 +85,12 @@ public class TestFeaturesConfig
+                 .setOptimizeMetadataQueriesIgnoreStats(false)
+                 .setOptimizeMetadataQueriesCallThreshold(100)
+                 .setOptimizeHashGeneration(true)
++                .setUnaliasSymbolReferences(true)
++                .setPickTableLayoutForPredicate(true)
++                .setPruneTableScanColumns(true)
++                .setPruneFilterColumns(true)
++                .setSimplifyExpressions(true)
++                .setPruneCrossJoinColumns(true)
+                 .setPushTableWriteThroughUnion(true)
+                 .setDictionaryAggregation(false)
+                 .setAggregationPartitioningMergingStrategy(LEGACY)
+@@ -268,6 +274,12 @@ public class TestFeaturesConfig
+                 .put("optimizer.optimize-metadata-queries-ignore-stats", "true")
+                 .put("optimizer.optimize-metadata-queries-call-threshold", "200")
+                 .put("optimizer.optimize-hash-generation", "false")
++                .put("optimizer.unalias-symbol-references", "false")
++                .put("optimizer.pick-table-layout-for-predicate", "false")
++                .put("optimizer.prune-table-scan-columns", "false")
++                .put("optimizer.prune-filter-columns", "false")
++                .put("optimizer.simplify-expressions", "false")
++                .put("optimizer.prune-cross-join-columns", "false")
+                 .put("optimizer.optimize-mixed-distinct-aggregations", "true")
+                 .put("optimizer.push-table-write-through-union", "false")
+                 .put("optimizer.dictionary-aggregation", "true")
+@@ -416,6 +428,12 @@ public class TestFeaturesConfig
+                 .setOptimizeMetadataQueriesIgnoreStats(true)
+                 .setOptimizeMetadataQueriesCallThreshold(200)
+                 .setOptimizeHashGeneration(false)
++                .setUnaliasSymbolReferences(false)
++                .setPickTableLayoutForPredicate(false)
++                .setPruneTableScanColumns(false)
++                .setPruneFilterColumns(false)
++                .setSimplifyExpressions(false)
++                .setPruneCrossJoinColumns(false)
+                 .setOptimizeMixedDistinctAggregations(true)
+                 .setPushTableWriteThroughUnion(false)
+                 .setDictionaryAggregation(true)
+-- 
+2.34.1
+
