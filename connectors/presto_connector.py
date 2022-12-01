@@ -1,6 +1,5 @@
 """This module provides several helper functions to connect to presto server"""
 import prestodb
-
 import connectors.connector
 from connectors.connector import DBConnector
 import configparser
@@ -44,7 +43,6 @@ class PrestoConnector(DBConnector):
             self.connection.session_properties[knob] = True
         for knob in knobs:
             self.connection.session_properties[knob] = False
-
 
     def explain(self, query):
         # fragmented_query_plan, _ = self.execute('EXPLAIN (TYPE DISTRIBUTED, FORMAT JSON) ' + query)

@@ -47,8 +47,8 @@ AutoSteer's training mode execution consists of two steps:
    ```
    trainingmode.py --database {postgres|presto|mysql|duckdb|spark} --benchmark {path-to-sql-queries}
    ```
-2. By now, AutoSteer persisted all generated training data (e.g. query plans and execution statistics) in the
-   sqlite-database `results.sqlite`.
+2. By now, AutoSteer persisted all generated training data (e.g. query plans and execution statistics) in a
+   sqlite-database that can be found under `results/<database>.sqlite`.
 3. Train BaoNet: TBA
 
 ## Code Formatting
