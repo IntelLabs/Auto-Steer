@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS query_optimizer_configs
 (
     id                   INTEGER PRIMARY KEY,
     query_id             INTEGER REFERENCES queries,
-    disabled_rules       TEXT,
+    disabled_rules       TEXT, -- this column represents exactly one hint-set
     query_plan           TEXT,
     num_disabled_rules   INTEGER,
     hash                 INTEGER, -- the hash value of the optimizer query plan

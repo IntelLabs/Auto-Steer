@@ -37,6 +37,11 @@ class DBConnector:
         raise NotImplementedError()
 
     @staticmethod
+    def get_plan_preprocessor():
+        """Return the type of the query plan preprocessor"""
+        raise NotImplementedError()
+
+    @staticmethod
     def get_name() -> str:
         """Return the name of the database connector"""
         raise NotImplementedError()

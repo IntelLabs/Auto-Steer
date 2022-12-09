@@ -3,15 +3,16 @@ import queue
 from multiprocessing.pool import ThreadPool as Pool
 import numpy as np
 import storage
-from custom_logging import autosteer_logging
-from config import read_config
+from utils.custom_logging import logger
+from utils.config import read_config
+from utils.util import flatten
 
-N_THREADS = int(read_config()['anysteer']['explain_threads'])
+N_THREADS = int(read_config()['autosteer']['explain_threads'])
 FAILED = 'FAILED'
 
 
 class HintSet:
-    """A hint-set describing the knobs to disable and having potential dependencies to other hint-sets"""
+    """A hint-set describing the disabled knobs; may have dependencies to other hint-sets"""
 
     def __init__(self, knobs, dependencies):
         self.knobs: set = knobs
@@ -30,7 +31,6 @@ class HintSet:
 
 
 def get_query_plan(args: tuple) -> HintSet:
-    # todo use multiple sessions to explain plans in parallel?
     connector_type, sql_query, hintset = args
     connector = connector_type()
     knobs = hintset.get_all_knobs()
@@ -39,32 +39,28 @@ def get_query_plan(args: tuple) -> HintSet:
     return hintset
 
 
-def flatten(l):
-    return [item for sublist in l for item in sublist]
-
-
-def approximate_query_span(connector_type, sql_query: str, get_json_query_plan, find_alternative_rules=False, batch_wise=False) -> \
-    list[HintSet]:
-    # create singleton hint-sets
+def approximate_query_span(connector_type, sql_query: str, get_json_query_plan, find_alternative_rules=False, batch_wise=False) -> list[HintSet]:
+    # Create singleton hint-sets
     knobs = np.array(connector_type.get_knobs())
-    hintsets = np.array([HintSet({knob}, None) for knob in knobs])
+    hint_sets = np.array([HintSet({knob}, None) for knob in knobs])
+    # To speed up the query span approximation, we can submit multiple queries in parallel
     with Pool(N_THREADS) as thread_pool:
         query_span: list[HintSet] = []
         default_plan = get_json_query_plan((connector_type, sql_query, HintSet(set(), None)))
         query_span.append(default_plan)
 
-        args = [(connector_type, sql_query, knob) for knob in hintsets]
+        args = [(connector_type, sql_query, knob) for knob in hint_sets]
         results = np.array(list(map(get_json_query_plan, args)))
 
         default_plan_hash = hash(default_plan.plan)
-        autosteer_logging.info('default plan hash: #%s', default_plan_hash)
+        logger.info('Default plan hash: #%s', default_plan_hash)
         failed_plan_hash = hash(FAILED)
-        autosteer_logging.info('failed query hash: #%s', failed_plan_hash)
+        logger.info('Failed query hash: #%s', failed_plan_hash)
 
         hashes = np.array(list(thread_pool.map(lambda res: hash(res.plan), results)))
         effective_optimizers_indexes = np.where((hashes != default_plan_hash) & (hashes != failed_plan_hash))
         required_optimizers_indexes = np.where(hashes == failed_plan_hash)
-        autosteer_logging.info('there are %s alternative plans', effective_optimizers_indexes[0].size)
+        logger.info('There are %s alternative plans', effective_optimizers_indexes[0].size)
 
         new_effective_optimizers = queue.Queue()
         for optimizer in results[effective_optimizers_indexes]:
@@ -76,7 +72,7 @@ def approximate_query_span(connector_type, sql_query: str, get_json_query_plan, 
             query_span.append(required_optimizer)
 
         # note that indices change after delete
-        hintsets = np.delete(hintsets, np.concatenate([effective_optimizers_indexes, required_optimizers_indexes], axis=1))
+        hint_sets = np.delete(hint_sets, np.concatenate([effective_optimizers_indexes, required_optimizers_indexes], axis=1))
 
         if find_alternative_rules:
             if batch_wise:  # batch approximation (this is Pari's approach)
@@ -90,7 +86,7 @@ def approximate_query_span(connector_type, sql_query: str, get_json_query_plan, 
                         query_span.append(optimizer)
                     default_plan = get_json_query_plan((connector_type, sql_query, all_effective_optimizers))
                     default_plan_hash = hash(default_plan.plan)
-                    args = [(connector_type, sql_query, HintSet(set(hs.knobs), all_effective_optimizers)) for hs in hintsets]
+                    args = [(connector_type, sql_query, HintSet(set(hs.knobs), all_effective_optimizers)) for hs in hint_sets]
                     results = np.array(list(thread_pool.map(get_json_query_plan, args)))
                     hashes = np.array(list(map(lambda res: hash(res.plan), results)))
                     effective_optimizers_indexes = np.where((hashes != default_plan_hash) & (hashes != failed_plan_hash))
@@ -104,7 +100,7 @@ def approximate_query_span(connector_type, sql_query: str, get_json_query_plan, 
                     effective_optimizer = new_effective_optimizers.get()
                     query_span.append(effective_optimizer)
                     default_plan_hash = hash(effective_optimizer.plan)
-                    args = [(connector_type, sql_query, HintSet(hs.knobs, effective_optimizer)) for hs in hintsets]
+                    args = [(connector_type, sql_query, HintSet(hs.knobs, effective_optimizer)) for hs in hint_sets]
                     results = np.array(list(thread_pool.map(get_json_query_plan, args)))  # thread_pool
                     hashes = np.array(list(map(lambda res: hash(res.plan), results)))
                     effective_optimizers_indexes = np.where((hashes != default_plan_hash) & (hashes != failed_plan_hash))
@@ -113,9 +109,9 @@ def approximate_query_span(connector_type, sql_query: str, get_json_query_plan, 
                     # add new alternative optimizers to the queue, remove them from the knobs
                     for alternative_optimizer in new_alternative_optimizers:
                         new_effective_optimizers.put(alternative_optimizer)
-                        for i in reversed(range(len(hintsets))):
-                            if hintsets[i] == alternative_optimizer:
-                                hintsets = np.delete(hintsets, i)
+                        for i in reversed(range(len(hint_sets))):
+                            if hint_sets[i] == alternative_optimizer:
+                                hint_sets = np.delete(hint_sets, i)
                                 break
         else:
             while not new_effective_optimizers.empty():
@@ -125,17 +121,41 @@ def approximate_query_span(connector_type, sql_query: str, get_json_query_plan, 
 
 
 def run_get_query_span(connector_type, query_path):
-    autosteer_logging.info('Approximate query span for query: %s', query_path)
+    logger.info('Approximate query span for query: %s', query_path)
     storage.register_query(query_path)
 
     sql = storage.read_sql_file(query_path)
     query_span = approximate_query_span(connector_type, sql, get_query_plan, find_alternative_rules=False, batch_wise=False)
 
-    # insert the query span into the database
+    # Serialize the approximated query span in the database
     for optimizer in query_span:  # pylint: disable=not-an-iterable
-        autosteer_logging.info('Found new hint-set: %s', optimizer)
+        logger.info('Found new hint-set: %s', optimizer)
         storage.register_optimizer(query_path, ','.join(sorted(optimizer.knobs)), 'query_effective_optimizers')
         # consider recursive optimizer dependencies here
         if optimizer.dependencies is not None:
             storage.register_optimizer_dependency(query_path, ','.join(sorted(optimizer.knobs)), ','.join(sorted(optimizer.knobs)),
                                                   'query_effective_optimizers_dependencies')
+
+
+class QuerySpan:
+    """A wrapper class for query spans, that get reconstructed from storage"""
+
+    def __init__(self, query_path=None):
+        if query_path is not None:
+            self.query_path = query_path
+            self.effective_optimizers = storage.get_effective_optimizers(self.query_path)
+            self.required_optimizers = storage.get_required_optimizers(self.query_path)
+            self._get_dependencies()
+
+    def _get_dependencies(self):
+        """Alternative optimizers become only effective if their dependencies are also deactivated"""
+        dependencies = storage.get_effective_optimizers_depedencies(self.query_path)
+        self.dependencies = {}
+        for optimizer, dependency in dependencies:
+            if optimizer in self.dependencies:
+                self.dependencies[optimizer].append(dependency)
+            else:
+                self.dependencies[optimizer] = [dependency]
+
+    def get_tunable_knobs(self):
+        return sorted(list(set(self.effective_optimizers).difference(self.required_optimizers)))

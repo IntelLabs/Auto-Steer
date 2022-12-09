@@ -4,6 +4,7 @@ import connectors.connector
 from connectors.connector import DBConnector
 import configparser
 import os
+from inference.preprocessing.preprocess_presto_plans import PrestoPlanPreprocessor
 
 
 class PrestoConnector(DBConnector):
@@ -14,6 +15,7 @@ class PrestoConnector(DBConnector):
         self.config = configparser.ConfigParser()
         self.config.read(os.path.dirname(__file__) + '/../configs/presto.cfg')
         self.session_properties = {}
+        self.connect()
 
     def connect(self):
         defaults = self.config['DEFAULT']
@@ -62,8 +64,13 @@ class PrestoConnector(DBConnector):
         return self.session_properties[knob]
 
     @staticmethod
+    def get_plan_preprocessor():
+        """Return the type of the query plan preprocessor"""
+        return PrestoPlanPreprocessor
+
+    @staticmethod
     def get_name() -> str:
-        return "presto"
+        return 'presto'
 
     @staticmethod
     def get_knobs() -> list:

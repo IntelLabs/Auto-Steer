@@ -4,7 +4,7 @@ from pyspark.sql import SparkSession
 import time
 import re
 import os
-from custom_logging import autosteer_logging
+from utils.custom_logging import logger
 from connectors.connector import DBConnector
 import configparser
 
@@ -22,7 +22,7 @@ class SparkConnector(DBConnector):
         self.config = configparser.ConfigParser()
         self.config.read(os.path.dirname(__file__) + '/../configs/spark.cfg')
         defaults = self.config['DEFAULT']
-        autosteer_logging.info('SparkSQL connector conntects to %s', defaults['SPARK_MASTER_URL'])
+        logger.info('SparkSQL connector conntects to %s', defaults['SPARK_MASTER_URL'])
         self.spark_master_url = defaults['SPARK_MASTER_URL']
         self.data_location = defaults['DATA_LOCATION']
 
@@ -55,7 +55,7 @@ class SparkConnector(DBConnector):
                 parquet_table = self.spark_session.read.parquet(filename)
                 parquet_table.createOrReplaceTempView(file.replace('.parquet', ''))
         else:
-            autosteer_logging.fatal('SparkConnector cannot find the data directory containing the parquet files')
+            logger.fatal('SparkConnector cannot find the data directory containing the parquet files')
 
     def _postprocess_plan(self, plan):
         """Remove random ids from the explained query plan"""
@@ -66,9 +66,9 @@ class SparkConnector(DBConnector):
         begin = time.time_ns()
         collection = self.spark_session.sql(query).collect()
         elapsed_time_usecs = int((time.time_ns() - begin) / 1_000)
-        autosteer_logging.info(f'QUERY RESULT: {str(collection)[:100] if len(str(collection)) > 100 else collection}')
+        logger.info('QUERY RESULT %s', str(collection)[:100] if len(str(collection)) > 100 else collection)
         collection = 'EmptyResult' if len(collection) == 0 else collection[0]
-        autosteer_logging.info(f'Hash(QueryResult) = {str(hash(str(collection)))}')
+        logger.info('Hash(QueryResult) = %s', str(hash(str(collection))))
 
         return DBConnector.TimedResult(collection, elapsed_time_usecs)
 
@@ -94,7 +94,7 @@ class SparkConnector(DBConnector):
 
     @staticmethod
     def get_name() -> str:
-        return "spark"
+        return 'spark'
 
     @staticmethod
     def get_knobs() -> list:

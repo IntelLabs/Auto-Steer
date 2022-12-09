@@ -75,7 +75,7 @@ class MySqlConnector(DBConnector):
 
     @staticmethod
     def get_name() -> str:
-        return "mysql"
+        return 'mysql'
 
     @staticmethod
     def get_knobs() -> list:

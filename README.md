@@ -4,6 +4,17 @@
 
 This prototype implementation is licensed under the 'MIT license' (see LICENSE).
 
+## Open Issues
+
+Because of an incompatible license, we cannot include the source code of the *tree convolutional neural network*.
+We currently work on this problem.
+
+This affects the following files:
+
+- `inference/tree_conf/*`
+- `inference/{model|net}.py`
+- b
+
 ## Requirements
 
 ### Packages
@@ -30,6 +41,7 @@ This prototype implementation is licensed under the 'MIT license' (see LICENSE).
     - Apply the PrestoDB patch : `git apply Presto-disable-optimizers-through-session-properties.patch`
     - Build PrestoDB from source and start the server
 - MySQL
+    - We tested AutoSteer with MySQL 8
 - DuckDB
     - Install the DuckDB-python package via `pip`
 - SparkSQL
@@ -43,17 +55,21 @@ Depending on your custom installation and DBMS setup, add the required informati
 
 AutoSteer's training mode execution consists of two steps:
 
-1. (A) Approximate the query span, and (B) run the dynamic programming-based hint-set exploration 
-   ```
-   trainingmode.py --database {postgres|presto|mysql|duckdb|spark} --benchmark {path-to-sql-queries}
+1. (A) Approximate the query span, and (B) run the dynamic programming-based hint-set exploration
+   ```commandline
+   main.py --training --database {postgres|presto|mysql|duckdb|spark} --benchmark {path-to-sql-queries}
    ```
 2. By now, AutoSteer persisted all generated training data (e.g. query plans and execution statistics) in a
    sqlite-database that can be found under `results/<database>.sqlite`.
-3. Train BaoNet: TBA
+3. For PrestoDB query plans, we implemented the preprocessing of query plans for tree convolutional neural networks.
+   ```commandline
+   main.py --inference --database presto --benchmark {path-to-sql-queries}
+   ```
+4. The results can be found in the directory `evaluation`.
 
 ## Code Formatting
 
 - All python files will be checked using `pylint` before they can be comitted. The code style is primarily based on
-  the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html), however, it allows much longer
-  lines (160 characters).
+  the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html).
+  However, it allows longer lines (160 characters).
 - Please, install and run pylint (there is also a git pre-commit hook) before committing

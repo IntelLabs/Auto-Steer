@@ -46,7 +46,7 @@ class DuckDBConnector(DBConnector):
 
     @staticmethod
     def get_name() -> str:
-        return "duckdb"
+        return 'duckdb'
 
     @staticmethod
     def get_knobs() -> list:

@@ -4,6 +4,7 @@ from connectors.connector import DBConnector
 import configparser
 import time
 import os
+from inference.preprocessing.preprocess_postgres_plans import PostgresPlanProcessor
 
 
 class PostgresConnector(DBConnector):
@@ -51,7 +52,7 @@ class PostgresConnector(DBConnector):
     def explain(self, query: str) -> str:
         """Explain a query and return the json query plan"""
         self.cursor.execute(f'EXPLAIN (FORMAT JSON) {query}')
-        return str(self.cursor.fetchone()[0])
+        return str(self.cursor.fetchone()[0][0]['Plan'])
 
     def execute(self, query: str) -> DBConnector.TimedResult:
         """Execute the query and return its result"""
@@ -63,8 +64,13 @@ class PostgresConnector(DBConnector):
         return DBConnector.TimedResult(result, elapsed_time_usec)
 
     @staticmethod
+    def get_plan_preprocessor():
+        """Return the type of the query plan preprocessor"""
+        return PostgresPlanProcessor
+
+    @staticmethod
     def get_name() -> str:
-        return "postgres"
+        return 'postgres'
 
     @staticmethod
     def get_knobs() -> list:
