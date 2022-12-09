@@ -7,7 +7,7 @@ import random
 import socket
 import sqlalchemy
 from datetime import datetime
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.sql import text
 from sqlalchemy.exc import IntegrityError
 import unittest
@@ -25,11 +25,23 @@ def read_sql_file(filename, encoding='utf-8') -> str:
     return '\n'.join(filter(lambda line: not line.startswith('--'), statements))
 
 
+# def load_extension(dbapi_conn, _):
+#    conn.enable_load_extension(True)
+#    conn.load_extension('./sqlean-extensions/stats.so')
+
+
 def _db():
     global ENGINE
     url = f'sqlite:///results/{TESTED_DATABASE}.sqlite'
     autosteer_logging.debug('Connect to database: %s', url)
     ENGINE = create_engine(url)
+
+    @event.listens_for(ENGINE, "connect")
+    def connect(dbapi_conn, _):
+        """Load SQLite extension for median calculation"""
+        dbapi_conn.enable_load_extension(True)
+        dbapi_conn.load_extension('./sqlean-extensions/stats.so')
+        dbapi_conn.enable_load_extension(False)
 
     conn = ENGINE.connect()
     schema = read_sql_file(SCHEMA_FILE)
@@ -261,23 +273,114 @@ def median_runtimes():
         return [OptimizerConfigResult(*row) for index, row in default_median_runtimes.iterrows()]
 
 
+def best_alternative_configuration(benchmark=None, postgres=False):
+    class OptimizerConfigResult:
+        def __init__(self, path, num_disabled_rules, runtime, runtime_baseline, savings, disabled_rules, rank):
+            self.path = path
+            self.num_disabled_rules = num_disabled_rules
+            self.runtime = runtime
+            self.runtime_baseline = runtime_baseline
+            self.savings = savings
+            self.disabled_rules = disabled_rules
+            self.rank = rank
+
+    autosteer_logging.warning(f"Use {'postgres_stmt' if postgres else 'presto_stmt'} to get the best alternative configurations")
+
+    postgres_stmt = f"""
+with default_plans (query_path, running_time) as (
+    select q.query_path, median(elapsed)
+    from queries q,
+         query_optimizer_configs qoc,
+         measurements m
+    where q.id = qoc.query_id
+      and qoc.id = m.query_optimizer_config_id
+      --and qoc.num_disabled_rules = 0
+      and qoc.disabled_rules = 'None'
+    group by q.query_path, qoc.num_disabled_rules, qoc.disabled_rules
+    having median(elapsed) < 1000000000
+)
+        ,
+     results(query_path, num_disabled_rules, runtime, runtime_baseline, savings, disabled_rules, rank) as (
+         select q.query_path,
+                qoc.num_disabled_rules,
+                median(m.elapsed),
+                dp.running_time,
+                (dp.running_time - median(m.elapsed)) / dp.running_time                     as savings,
+                qoc.disabled_rules,
+                dense_rank() over (
+                    partition by q.query_path
+                    order by (dp.running_time - median(m.elapsed)) / dp.running_time desc ) as ranki
+         from queries q,
+              query_optimizer_configs qoc,
+              measurements m,
+              default_plans dp
+         where q.id = qoc.query_id
+           and qoc.id = m.query_optimizer_config_id
+           and dp.query_path = q.query_path
+           and qoc.num_disabled_rules > 0
+         group by q.query_path, qoc.num_disabled_rules, qoc.disabled_rules, dp.running_time
+         order by savings desc)
+select *
+from results
+where rank = 1
+and query_path like '%%{'' if benchmark is None else benchmark}%%'
+order by savings desc;
+"""
+    # this stmt use for presto
+    stmt = f"""
+       with default_plans (query_path, running_time) as (
+        select q.query_path, median(m.running + m.finishing)
+        from queries q,
+             query_optimizer_configs qoc,
+             measurements m
+        where q.id = qoc.query_id
+          and qoc.id = m.query_optimizer_config_id
+          and qoc.num_disabled_rules = 0
+          and qoc.disabled_rules = 'None'
+        group by q.query_path, qoc.num_disabled_rules, qoc.disabled_rules),
+         results(query_path, num_disabled_rules, runtime, runtime_baseline, savings, disabled_rules, rank) as (
+             select q.query_path,
+                    qoc.num_disabled_rules,
+                    median(m.running + m.finishing),
+                    dp.running_time,
+                    (dp.running_time - median(m.running + m.finishing)) / dp.running_time as savings,
+                    qoc.disabled_rules,
+                    dense_rank() over (
+                        partition by q.query_path
+                        order by (dp.running_time - median(m.running + m.finishing)) / dp.running_time desc ) as ranki
+             from queries q,
+                  query_optimizer_configs qoc,
+                  measurements m,
+                  default_plans dp
+             where q.id = qoc.query_id
+               and qoc.id = m.query_optimizer_config_id
+               and dp.query_path = q.query_path
+               and qoc.num_disabled_rules > 0
+             group by q.query_path, qoc.num_disabled_rules, qoc.disabled_rules, dp.running_time
+             order by savings desc)
+    select *
+    from results
+    where rank = 1
+    and query_path like '%%{'' if benchmark is None else benchmark}%%'
+    order by savings desc;"""
+
+    with _db() as conn:
+        cursor = conn.execute(postgres_stmt if postgres else stmt, )
+        return [OptimizerConfigResult(*row) for row in cursor.fetchall()]
+
+
 class TestStorage(unittest.TestCase):
     """Test the storage for benchmarks"""
 
-    def test_schema(self):
-        with _db() as db:
-            result = db.execute('SHOW tables')
-            assert len(result.fetchall()) == 6
-
     def test_median(self):
         with _db() as db:
-            result = db.execute('SELECT MEDIAN(a) FROM (SELECT 1 AS a) AS tab')
-            assert len(result.fetchall()) == 1
+            result = db.execute('SELECT MEDIAN(a) FROM (SELECT 1 AS a) AS tab').fetchall()
+            assert len(result) == 1
 
     def test_queries(self):
         with _db() as db:
             result = db.execute('SELECT * from queries').fetchall()
-            print(result.count())
+            print(result)
 
     def test_optimizers(self):
         with _db() as db:
