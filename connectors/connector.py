@@ -1,4 +1,6 @@
 """Base clase for AutoSteer-G connectors"""
+from typing import Type
+from inference.preprocessing.preprocessor import QueryPlanPreprocessor
 
 
 class DBConnector:
@@ -37,7 +39,7 @@ class DBConnector:
         raise NotImplementedError()
 
     @staticmethod
-    def get_plan_preprocessor():
+    def get_plan_preprocessor() -> Type[QueryPlanPreprocessor]:
         """Return the type of the query plan preprocessor"""
         raise NotImplementedError()
 

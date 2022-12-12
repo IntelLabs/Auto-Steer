@@ -4,7 +4,6 @@ from connectors.connector import DBConnector
 import configparser
 import time
 import os
-from inference.preprocessing.preprocess_postgres_plans import PostgresPlanProcessor
 
 
 class PostgresConnector(DBConnector):
@@ -62,11 +61,6 @@ class PostgresConnector(DBConnector):
         elapsed_time_usec = int((time.time_ns() - begin) / 1_000)
 
         return DBConnector.TimedResult(result, elapsed_time_usec)
-
-    @staticmethod
-    def get_plan_preprocessor():
-        """Return the type of the query plan preprocessor"""
-        return PostgresPlanProcessor
 
     @staticmethod
     def get_name() -> str:

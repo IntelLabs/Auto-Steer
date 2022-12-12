@@ -1,10 +1,12 @@
 """This module provides several helper functions to connect to presto server"""
+from typing import Type
 import prestodb
 import connectors.connector
 from connectors.connector import DBConnector
 import configparser
 import os
 from inference.preprocessing.preprocess_presto_plans import PrestoPlanPreprocessor
+from inference.preprocessing.preprocessor import QueryPlanPreprocessor
 
 
 class PrestoConnector(DBConnector):
@@ -64,7 +66,7 @@ class PrestoConnector(DBConnector):
         return self.session_properties[knob]
 
     @staticmethod
-    def get_plan_preprocessor():
+    def get_plan_preprocessor() -> Type[QueryPlanPreprocessor]:
         """Return the type of the query plan preprocessor"""
         return PrestoPlanPreprocessor
 

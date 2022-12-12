@@ -4,17 +4,6 @@
 
 This prototype implementation is licensed under the 'MIT license' (see LICENSE).
 
-## Open Issues
-
-Because of an incompatible license, we cannot include the source code of the *tree convolutional neural network*.
-We currently work on this problem.
-
-This affects the following files:
-
-- `inference/tree_conf/*`
-- `inference/{model|net}.py`
-- b
-
 ## Requirements
 
 ### Packages

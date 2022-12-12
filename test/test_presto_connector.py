@@ -1,5 +1,6 @@
 """Test AutoSteer-G's PrestoDB connector"""
 from connectors.presto_connector import PrestoConnector
+from inference.preprocessing.preprocess_presto_plans import PrestoPlanPreprocessor
 import unittest
 
 
@@ -36,6 +37,10 @@ class TestPrestoConnector(unittest.TestCase):
 
     def test_num_knobs(self):
         self.assertEqual(len(PrestoConnector.get_knobs()), 7)
+
+    def test_preprocessor(self):
+        preprocessor = PrestoConnector.get_plan_preprocessor()
+        self.assertEqual(preprocessor, PrestoPlanPreprocessor)
 
 
 if __name__ == '__main__':
