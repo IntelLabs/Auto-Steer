@@ -23,13 +23,13 @@ class MySqlConnector(DBConnector):
         self.host = defaults['HOST']
         self.connect()
 
-    def connect(self):
+    def connect(self) -> None:
         # connect to the MySql server
         self.connection = mysql.connector.connect(user=self.user, password='', host='127.0.0.1', database=self.database)
         self.cursor = self.connection.cursor(buffered=True)
         self.cursor.execute('SET GLOBAL interactive_timeout=40000')
 
-    def close(self):
+    def close(self) -> None:
         self.cursor.close()
         self.connection.close()
 

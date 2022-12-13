@@ -1,10 +1,10 @@
-"""Base clase for AutoSteer-G connectors"""
+"""Base class for AutoSteer-G connectors"""
 from typing import Type
 from inference.preprocessing.preprocessor import QueryPlanPreprocessor
 
 
 class DBConnector:
-    """Defines the basic connector"""
+    """The basic connector class"""
 
     class TimedResult:
         def __init__(self, result: str, time: int):
@@ -14,11 +14,11 @@ class DBConnector:
     def __init__(self):
         pass
 
-    def connect(self):
+    def connect(self) -> None:
         """Setup a new connection to the database"""
         raise NotImplementedError()
 
-    def close(self):
+    def close(self) -> None:
         """Close the connection to the database"""
         raise NotImplementedError()
 

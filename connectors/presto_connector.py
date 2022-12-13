@@ -19,7 +19,7 @@ class PrestoConnector(DBConnector):
         self.session_properties = {}
         self.connect()
 
-    def connect(self):
+    def connect(self) -> None:
         defaults = self.config['DEFAULT']
         self.session_properties['query_max_execution_time'] = defaults['execution_timeout']
         self.connection: prestodb.dbapi.Connection = prestodb.dbapi.connect(
@@ -32,7 +32,7 @@ class PrestoConnector(DBConnector):
             session_properties=self.session_properties,
         )
 
-    def close(self):
+    def close(self) -> None:
         self.connection.close()
 
     def execute(self, query) -> connectors.connector.DBConnector.TimedResult:
@@ -48,7 +48,7 @@ class PrestoConnector(DBConnector):
         for knob in knobs:
             self.connection.session_properties[knob] = False
 
-    def explain(self, query):
+    def explain(self, query) -> str:
         # fragmented_query_plan, _ = self.execute('EXPLAIN (TYPE DISTRIBUTED, FORMAT JSON) ' + query)
         timed_result = self.execute('EXPLAIN (FORMAT JSON) ' + query)
         return timed_result.result[0][0]

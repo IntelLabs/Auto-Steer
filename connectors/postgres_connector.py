@@ -22,12 +22,12 @@ class PostgresConnector(DBConnector):
         self.postgres_connection_string = f'postgresql://{user}:{password}@{host}:5432/{database}'
         self.connect()
 
-    def connect(self):
+    def connect(self) -> None:
         self.connection = psycopg2.connect(self.postgres_connection_string)
         self.cursor = self.connection.cursor()
         self.cursor.execute('set statement_timeout to 40000; commit;')
 
-    def close(self):
+    def close(self) -> None:
         self.cursor.close()
         self.connection.close()
 

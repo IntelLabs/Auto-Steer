@@ -16,13 +16,13 @@ class DuckDBConnector(DBConnector):
         self.connection = None
         self.connect()
 
-    def connect(self):
+    def connect(self) -> None:
         defaults = self.config['DEFAULT']
         self.connection = duckdb.connect(defaults['DATABASE'])
         self.connection.execute(f'PRAGMA memory_limit=\'{defaults["MEMORY_LIMIT"]}\';')
         self.connection.execute(f'PRAGMA threads={defaults["THREADS"]}')
 
-    def close(self):
+    def close(self) -> None:
         self.connection.close()
 
     def execute(self, query) -> DBConnector.TimedResult:
@@ -31,7 +31,7 @@ class DuckDBConnector(DBConnector):
         elapsed_time_usecs = int((time.time_ns() - begin) / 1_000)
         return DBConnector.TimedResult(str(result), elapsed_time_usecs)
 
-    def explain(self, query):
+    def explain(self, query) -> str:
         result = self.connection.execute(f'EXPLAIN {query}').fetchone()  # tuple('physical plan', <actual plan>)
         return result[1]  # return the actual plan
 

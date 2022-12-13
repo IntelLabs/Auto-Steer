@@ -36,17 +36,17 @@ class SparkConnector(DBConnector):
         self.spark_session = None
         self._init_parquet_files()
 
-    def connect(self):
+    def connect(self) -> None:
         if self.spark_session is None:
             self.spark_session = SparkSession.builder.master(self.spark_master_url).appName(self.app_name).getOrCreate()
         SparkSession.getActiveSession()
 
-    def close(self):
+    def close(self) -> None:
         if self.spark_session is not None:
             self.spark_session.stop()
 
-    def _init_parquet_files(self):
-        """For our experiments, data is stored in parquet files. We Create TempViews in PySpark for them"""
+    def _init_parquet_files(self) -> None:
+        """For our experiments, data is stored in parquet files. We Create TempViews in PySpark for each of them"""
         if os.path.isdir(f'../{self.data_location}'):
             files = os.listdir(f'../{self.data_location}')
             for file in files:
@@ -57,9 +57,9 @@ class SparkConnector(DBConnector):
         else:
             logger.fatal('SparkConnector cannot find the data directory containing the parquet files')
 
-    def _postprocess_plan(self, plan):
+    def _postprocess_plan(self, plan) -> str:
         """Remove random ids from the explained query plan"""
-        pattern = re.compile(r'#\d+L?|\(\d+\)|\[\d+\]')
+        pattern = re.compile(r'#\d+L?|\(\d+\)|\[\d+]')
         return re.sub(pattern, '', plan)
 
     def execute(self, query) -> DBConnector.TimedResult:
@@ -72,7 +72,7 @@ class SparkConnector(DBConnector):
 
         return DBConnector.TimedResult(collection, elapsed_time_usecs)
 
-    def explain(self, query):
+    def explain(self, query) -> str:
         timed_result = self.execute(f'EXPLAIN FORMATTED {query}')
         return self._postprocess_plan(timed_result.result[0])
 
