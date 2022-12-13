@@ -55,7 +55,7 @@ class HintSetExploration:
         return f'Config {{\n\toptimizers:{self.tunable_knobs}}}'
 
     def get_measurements(self):
-        """Get all measurements collected so far for the considered query"""
+        """Get all measurements collected so far for the current query"""
         stmt = f'''
             select walltime as total_runtime, qoc.disabled_rules, m.time, qoc.num_disabled_rules
             from queries q,
