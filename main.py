@@ -13,10 +13,10 @@ from autosteer.query_span import run_get_query_span
 from inference.train import train_tcnn
 
 
-def approx_query_span_and_run(connector, path: str):
-    run_get_query_span(connector, path)
+def approx_query_span_and_run(connector: Type[connectors.connector.DBConnector], benchmark: str, query: str):
+    run_get_query_span(connector, benchmark, query)
     connector = connector()
-    run_query_with_optimizer_configs(connector, path)
+    run_query_with_optimizer_configs(connector, f'{benchmark}/{query}')
 
 
 def inference_mode(connector, benchmark: str):
@@ -47,6 +47,8 @@ if __name__ == '__main__':
         logger.fatal('Cannot access the benchmark directory containing the sql files with path=%s', args.benchmark)
         sys.exit(1)
 
+    storage.BENCHMARK_ID = storage.register_benchmark(args.benchmark)
+
     if (args.inference and args.training) or (not args.inference and not args.training):
         logger.fatal('Specify either training or inference mode')
         sys.exit(1)
@@ -59,4 +61,4 @@ if __name__ == '__main__':
         logger.info('Found the following SQL files: %s', queries)
         for query in queries:
             logger.info('run Q%s...', query)
-            approx_query_span_and_run(ConnectorType, f'{args.benchmark}/{query}')
+            approx_query_span_and_run(ConnectorType, args.benchmark, query)

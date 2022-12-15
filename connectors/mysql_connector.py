@@ -60,8 +60,8 @@ class MySqlConnector(DBConnector):
 
     def explain(self, query: str) -> str:
         """Explain a query and return its plan"""
-        self.cursor.execute(f'EXPLAIN {query}')
-        result = self.cursor.fetchone()
+        self.cursor.execute(f'EXPLAIN FORMAT=JSON {query}')
+        result = self.cursor.fetchone()[0]
         result = str(result)
         return result
 

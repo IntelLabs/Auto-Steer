@@ -49,8 +49,8 @@ class PrestoConnector(DBConnector):
             self.connection.session_properties[knob] = False
 
     def explain(self, query) -> str:
-        # fragmented_query_plan, _ = self.execute('EXPLAIN (TYPE DISTRIBUTED, FORMAT JSON) ' + query)
         timed_result = self.execute('EXPLAIN (FORMAT JSON) ' + query)
+        # The query plan is already properly formatted as Json string
         return timed_result.result[0][0]
 
     def _get_connection(self) -> prestodb.dbapi.Connection:

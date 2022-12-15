@@ -16,6 +16,7 @@ import unittest
 SCHEMA_FILE = 'schema.sql'
 ENGINE = None
 TESTED_DATABASE = None
+BENCHMARK_ID = None
 
 
 def _db():
@@ -44,11 +45,23 @@ def _db():
     return conn
 
 
-def register_query(query_path):
+def register_benchmark(name: str) -> int:
+    # Register a new benchmark and return its id
     with _db() as conn:
         try:
-            stmt = text('INSERT INTO queries (query_path, result_fingerprint) VALUES (:query_path, :result_fingerprint )')
-            conn.execute(stmt, query_path=query_path, result_fingerprint=None)
+            stmt = text('INSERT INTO benchmarks (name) VALUES (:name)')
+            conn.execute(stmt, name=name)
+        except IntegrityError:
+            pass
+        return conn.execute('SELECT benchmarks.id FROM benchmarks WHERE name=:name', name=name).fetchone()[0]
+
+
+def register_query(query_path):
+    # Register a new query
+    with _db() as conn:
+        try:
+            stmt = text('INSERT INTO queries (benchmark_id, query_path, result_fingerprint) VALUES (:benchmark_id, :query_path, :result_fingerprint )')
+            conn.execute(stmt, benchmark_id=BENCHMARK_ID, query_path=query_path, result_fingerprint=None)
         except IntegrityError:
             pass
 
@@ -177,7 +190,7 @@ def get_df(query):
         return df
 
 
-def register_query_config(query_path, disabled_rules, query_plan, plan_hash):
+def register_query_config(query_path, disabled_rules, query_plan: dict, plan_hash):
     """
     Store the passed query optimizer configuration in the database.
     :returns: query plan is already known and a duplicate
@@ -192,21 +205,16 @@ def register_query_config(query_path, disabled_rules, query_plan, plan_hash):
     is_duplicate = result[0] > 0
 
     with _db() as conn:
-
-        def literal_processor(val):
-            return sqlalchemy.String('').literal_processor(dialect=ENGINE.dialect)(value=str(val))
-
         try:
-            query_plan_processed = literal_processor(json.dumps(query_plan))
-
             num_disabled_rules = 0 if disabled_rules is None else disabled_rules.count(',') + 1
             stmt = f"""INSERT INTO query_optimizer_configs
                    (query_id, disabled_rules, query_plan, num_disabled_rules, hash, duplicated_plan) 
-                   SELECT id, '{disabled_rules}', {query_plan_processed}, {num_disabled_rules}, {plan_hash}, {is_duplicate} from queries where query_path = '{query_path}'
+                   SELECT id, :disabled_rules, :query_plan_processed , :num_disabled_rules, :plan_hash, :is_duplicate from queries where query_path = '{query_path}'
                    """
-            conn.execute(stmt)
-        except IntegrityError:
-            pass  # query configuration has already been inserted
+            conn.execute(stmt, disabled_rules=str(disabled_rules), query_plan_processed=query_plan, num_disabled_rules=num_disabled_rules,
+                         plan_hash=plan_hash, is_duplicate=is_duplicate)
+        except IntegrityError as error:
+            pass  # OK! Query configuration has already been inserted
 
     return is_duplicate
 
@@ -228,7 +236,7 @@ def register_measurement(query_path, disabled_rules, walltime, input_data_size, 
     logger.info('register a new measurement for query %s and the disabled rules/optimizers [%s]', query_path, disabled_rules)
     with _db() as conn:
         now = datetime.now()
-        query = f"""INSERT INTO measurements (query_optimizer_config_id, walltime, machine, time, input_data_size, nodes)
+        query = f"""INSERT INTO measurements (query_optimizer_config_id, walltime, machine, time, input_data_size, num_compute_nodes)
                 SELECT id, {walltime}, '{socket.gethostname()}', '{now.strftime('%m/%d/%Y, %H:%M:%S')}', {input_data_size}, {nodes} FROM query_optimizer_configs 
                 WHERE query_id = (SELECT id from queries where query_path = '{query_path}') and disabled_rules = '{disabled_rules}'
                 """

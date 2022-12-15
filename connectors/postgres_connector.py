@@ -4,6 +4,7 @@ from connectors.connector import DBConnector
 import configparser
 import time
 import os
+import json
 
 
 class PostgresConnector(DBConnector):
@@ -51,7 +52,7 @@ class PostgresConnector(DBConnector):
     def explain(self, query: str) -> str:
         """Explain a query and return the json query plan"""
         self.cursor.execute(f'EXPLAIN (FORMAT JSON) {query}')
-        return str(self.cursor.fetchone()[0][0]['Plan'])
+        return json.dumps(self.cursor.fetchone()[0][0]['Plan'])
 
     def execute(self, query: str) -> DBConnector.TimedResult:
         """Execute the query and return its result"""

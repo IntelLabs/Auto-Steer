@@ -52,12 +52,12 @@ def approximate_query_span(connector_type, sql_query: str, get_json_query_plan, 
         args = [(connector_type, sql_query, knob) for knob in hint_sets]
         results = np.array(list(map(get_json_query_plan, args)))
 
-        default_plan_hash = hash(default_plan.plan)
+        default_plan_hash = hash(str(default_plan.plan))
         logger.info('Default plan hash: #%s', default_plan_hash)
         failed_plan_hash = hash(FAILED)
         logger.info('Failed query hash: #%s', failed_plan_hash)
 
-        hashes = np.array(list(thread_pool.map(lambda res: hash(res.plan), results)))
+        hashes = np.array(list(thread_pool.map(lambda res: hash(str(res.plan)), results)))
         effective_optimizers_indexes = np.where((hashes != default_plan_hash) & (hashes != failed_plan_hash))
         required_optimizers_indexes = np.where(hashes == failed_plan_hash)
         logger.info('There are %s alternative plans', effective_optimizers_indexes[0].size)
@@ -120,7 +120,8 @@ def approximate_query_span(connector_type, sql_query: str, get_json_query_plan, 
     return query_span
 
 
-def run_get_query_span(connector_type, query_path):
+def run_get_query_span(connector_type, benchmark, query):
+    query_path = f'{benchmark}/{query}'
     logger.info('Approximate query span for query: %s', query_path)
     storage.register_query(query_path)
 
