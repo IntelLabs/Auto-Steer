@@ -1,6 +1,7 @@
 """Test AutoSteer-G PostgreSQL connector"""
 from connectors.postgres_connector import PostgresConnector
 import unittest
+import json
 
 
 class TestPostgresConnector(unittest.TestCase):
@@ -17,8 +18,10 @@ class TestPostgresConnector(unittest.TestCase):
         self.assertIsNotNone(self.connector.connection)
 
     def test_explain(self):
-        result = self.connector.explain('SELECT 42;')
-        self.assertTrue(result.startswith('[{\'Plan'))
+        with open('./data/expected_postgres_plan.json', 'r', encoding='utf-8') as f:
+            expected_plan = ''.join(f.readlines())
+        actual_plan = self.connector.explain('SELECT 42;')
+        self.assertEqual(''.join(actual_plan.split()), ''.join(expected_plan.split()))
 
     def test_execution(self):
         result = self.connector.execute('SELECT 42;')

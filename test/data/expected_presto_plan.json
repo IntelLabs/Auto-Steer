@@ -1,0 +1,35 @@
+{
+  "id": "5",
+  "name": "Output",
+  "identifier": "[_col0]",
+  "details": "_col0 := expr (1:30)\n",
+  "children": [
+    {
+      "id": "1",
+      "name": "Project",
+      "identifier": "[projectLocality = LOCAL]",
+      "details": "expr := INTEGER'42'\n",
+      "children": [
+        {
+          "id": "125",
+          "name": "LocalExchange",
+          "identifier": "[ROUND_ROBIN] ()",
+          "details": "",
+          "children": [
+            {
+              "id": "0",
+              "name": "Values",
+              "identifier": "",
+              "details": "()\n",
+              "children": [],
+              "remoteSources": []
+            }
+          ],
+          "remoteSources": []
+        }
+      ],
+      "remoteSources": []
+    }
+  ],
+  "remoteSources": []
+}

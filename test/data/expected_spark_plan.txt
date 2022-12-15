@@ -1,0 +1,13 @@
+== Physical Plan ==
+* Project 
++- * Scan OneRowRelation 
+
+
+ Scan OneRowRelation [codegen id : 1]
+Output: []
+Arguments: ParallelCollectionRDD at sql at NativeMethodAccessorImpl.java:0, OneRowRelation, UnknownPartitioning
+
+ Project [codegen id : 1]
+Output : [42 AS 42]
+Input: []
+

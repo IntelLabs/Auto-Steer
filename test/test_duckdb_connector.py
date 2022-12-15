@@ -17,8 +17,10 @@ class TestDuckDBConnector(unittest.TestCase):
         self.assertIsNotNone(self.connector.connection)
 
     def test_explain(self):
+        with open('./data/expected_duckdb_plan.txt', 'r', encoding='utf-8') as f:
+            expected_plan = ''.join(f.readlines())
         result = self.connector.explain('SELECT 42;')
-        self.assertTrue(result.startswith('┌───────────────────────────┐\n'))
+        self.assertEqual(''.join(result.split()), ''.join(expected_plan.split()))
 
     def test_execution(self):
         result = self.connector.execute('SELECT 42;')

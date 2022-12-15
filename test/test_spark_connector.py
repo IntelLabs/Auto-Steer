@@ -14,8 +14,10 @@ class TestSparkConnector(unittest.TestCase):
         self.connector.close()
 
     def test_explain(self):
-        result = self.connector.explain('SELECT 42;')
-        self.assertTrue(result.startswith('== Physical Plan =='))
+        with open('./data/expected_spark_plan.txt', 'r', encoding='utf-8') as f:
+            expected_plan = ''.join(f.readlines())
+        actual_plan = self.connector.explain('SELECT 42;')
+        self.assertEqual(''.join(actual_plan.split()), ''.join(expected_plan.split()))
 
     def test_execution(self):
         result = self.connector.execute('SELECT 42;')
@@ -25,12 +27,12 @@ class TestSparkConnector(unittest.TestCase):
     def test_disable_knobs(self):
         knobs = SparkConnector.get_knobs()
         self.connector.set_disabled_knobs([])
-        # test that all knobs are turned on
+        # Test that all knobs are turned on
         self.assertTrue(all(self.connector.get_knob(knob) for knob in knobs))
         self.connector.set_disabled_knobs(knobs)
-        # test that all knobs are turned off
+        # Test that all knobs are turned off
         self.assertTrue(not any(self.connector.get_knob(knob) for knob in knobs))
-        # turn on all knobs
+        # Turn on all knobs
         self.connector.set_disabled_knobs([])
         self.assertTrue(all(self.connector.get_knob(knob) for knob in knobs))
 
