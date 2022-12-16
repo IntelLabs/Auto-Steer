@@ -11,7 +11,7 @@ WITH default_plans (query_path, running_time) AS
    GROUP BY q.query_path,
             qoc.num_disabled_rules,
             qoc.disabled_rules
-   HAVING median(elapsed) < 1000000000),
+   HAVING median(elapsed) < 1000000000), -- default for queries that timed out
      results(query_path, num_disabled_rules, runtime, runtime_baseline, savings, disabled_rules, rank) AS
   (SELECT q.query_path,
           qoc.num_disabled_rules,

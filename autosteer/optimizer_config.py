@@ -56,32 +56,31 @@ class HintSetExploration:
 
     def get_measurements(self):
         """Get all measurements collected so far for the current query"""
-        stmt = f'''
-            select walltime as total_runtime, qoc.disabled_rules, m.time, qoc.num_disabled_rules
-            from queries q,
+        stmt = '''
+            SELECT walltime as total_runtime, qoc.disabled_rules, m.time, qoc.num_disabled_rules
+            FROM queries q,
                  measurements m,
                  query_optimizer_configs qoc
-            where m.query_optimizer_config_id = qoc.id
-              and qoc.query_id = q.id
-              and q.query_path = '{self.query_path}'
-              and (qoc.num_disabled_rules = 1 or qoc.duplicated_plan = false)
+            WHERE m.query_optimizer_config_id = qoc.id
+              AND qoc.query_id = q.id
+              AND q.query_path = :query_path
             order by m.time asc;
             '''
-        return storage.get_df(stmt)
+        return storage.get_df(stmt, {'query_path': self.query_path})
 
     def get_baseline(self):
         """Get all measurements of the default plan"""
         df = self.get_measurements()  # pylint: disable=possibly-unused-variable
-        runs = pdsql.sqldf('select total_runtime from df where disabled_rules = \'None\'', locals())
+        runs = pdsql.sqldf('SELECT total_runtime FROM df WHERE disabled_rules = \'None\'', locals())
         runtimes = runs['total_runtime'].to_list()
         return runtimes
 
     def get_promising_measurements_by_num_rules(self, num_disabled_rules, baseline_median, baseline_mean):
         """Get all measurements for hint-sets having a specific size"""
         measurements = self.get_measurements()
-        stmt = f'''select total_runtime, disabled_rules, time
-        from measurements
-        where num_disabled_rules = {num_disabled_rules};'''
+        stmt = f'''SELECT total_runtime, disabled_rules, time
+        FROM measurements
+        WHERE num_disabled_rules = {num_disabled_rules};'''
         df = pdsql.sqldf(stmt, locals())
         measurements = df.groupby(['disabled_rules'])['total_runtime'].agg(['median', 'mean'])
 

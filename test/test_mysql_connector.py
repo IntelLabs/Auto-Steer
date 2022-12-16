@@ -1,7 +1,6 @@
 """Test AutoSteer-G MySQL connector"""
 from connectors.mysql_connector import MySqlConnector
 import unittest
-import json
 
 
 class TestMySQLConnector(unittest.TestCase):
@@ -18,7 +17,7 @@ class TestMySQLConnector(unittest.TestCase):
         self.assertIsNotNone(self.connector.connection)
 
     def test_explain(self):
-        with open('./data/expected_mysql_plan.json', 'r', encoding='utf-8') as f:
+        with open('./data/expected_mysql_plan.txt', 'r', encoding='utf-8') as f:
             expected_plan = ''.join(f.readlines())
         actual_plan = self.connector.explain('SELECT 42;')
         self.assertEqual(''.join(actual_plan.split()), ''.join(expected_plan.split()))

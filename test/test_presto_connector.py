@@ -2,7 +2,6 @@
 from connectors.presto_connector import PrestoConnector
 from inference.preprocessing.preprocess_presto_plans import PrestoPlanPreprocessor
 import unittest
-import json
 
 
 class TestPrestoConnector(unittest.TestCase):
@@ -16,7 +15,7 @@ class TestPrestoConnector(unittest.TestCase):
         self.connector.close()
 
     def test_explain(self):
-        with open('./data/expected_presto_plan.json', 'r', encoding='utf-8') as f:
+        with open('./data/expected_presto_plan.txt', 'r', encoding='utf-8') as f:
             expected_plan = ''.join(f.readlines())
         actual_plan = self.connector.explain('SELECT 42')
         self.assertEqual(''.join(actual_plan.split()), ''.join(expected_plan.split()))
