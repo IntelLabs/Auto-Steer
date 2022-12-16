@@ -197,7 +197,7 @@ class BaoRegressionModel:
         """Predict one or more samples"""
         if not isinstance(x, list):
             x = [x]  # x represents one sample only
-        x = [ast.literal_eval(x) if isinstance(x, str) else x for x in x]
+        x = [ast.literal_eval(x_) if isinstance(x_, str) else x_ for x_ in x]
 
         x = self.__tree_transform.transform(x)
 

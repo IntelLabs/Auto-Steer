@@ -132,12 +132,10 @@ def choose_best_plans(query_plan_preprocessor, filename: str, test_configs: list
     return list(reversed(sorted(performance_predictions, key=lambda entry: entry.selected_plan_relative_improvement)))
 
 
-def train_tcnn(connector, bench: str):
+def train_tcnn(connector, bench: str, retrain: bool, create_datasets: bool):
     query_plan_preprocessor = connector.get_plan_preprocessor()()
     model_name = f'nn/model/{connector.get_name()}_model'
     data_path = f'nn/data/{connector.get_name()}_data'
-    retrain = True
-    create_datasets = True
 
     if create_datasets:
         x_train, y_train, x_test, y_test, training_data, test_data = load_data(bench, training_ratio=0.85)

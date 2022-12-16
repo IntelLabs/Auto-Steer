@@ -19,8 +19,8 @@ def approx_query_span_and_run(connector: Type[connectors.connector.DBConnector],
     run_query_with_optimizer_configs(connector, f'{benchmark}/{query}')
 
 
-def inference_mode(connector, benchmark: str):
-    train_tcnn(connector, benchmark)
+def inference_mode(connector, benchmark: str, retrain: bool, create_datasets: bool):
+    train_tcnn(connector, benchmark, retrain, create_datasets)
 
 
 def get_connector_type(connector: str) -> Type[connectors.connector.DBConnector]:
@@ -54,7 +54,7 @@ if __name__ == '__main__':
         sys.exit(1)
     if args.inference:
         logger.info('Run AutoSteer\'s inference mode')
-        inference_mode(ConnectorType, args.benchmark)
+        inference_mode(ConnectorType, args.benchmark, args.retrain, args.create_datasets)
     elif args.training:
         logger.info('Run AutoSteer\'s training mode')
         queries = sorted(list(filter(lambda q: q.endswith('.sql'), os.listdir(args.benchmark))))

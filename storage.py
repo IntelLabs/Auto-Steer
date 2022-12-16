@@ -123,8 +123,8 @@ def experience(benchmark=None, training_ratio=0.8):
             group by qu.query_path, q.query_id, q.id, q.disabled_rules, q.num_disabled_rules, q.query_plan"""
 
     with _db() as conn:
-        benchmark = '%%' + benchmark + '%%'
-        df = pd.read_sql(stmt, conn, params={'benchmark': '%%' if benchmark is None else benchmark})
+        benchmark = '%%' if benchmark is None else '%%' + benchmark + '%%'
+        df = pd.read_sql(stmt, conn, params={'benchmark': benchmark})
     rows = [Measurement(*row) for index, row in df.iterrows()]
 
     # Group training and test data by query

@@ -21,10 +21,10 @@ def hash_sql_result(s):
     flattened_result = reduce(operator.concat, s)
     normalized_result = list(sorted(map(lambda item: str(round(item, 1)) if isinstance(item, float) else str(item), flattened_result)))
 
-    md5 = hashlib.md5()
+    sha256 = hashlib.sha256()
     for item in normalized_result:
-        md5.update(str(item).encode())
-    return int.from_bytes(md5.digest()[:4], 'big')
+        sha256.update(str(item).encode())
+    return int.from_bytes(sha256.digest()[:4], 'big')
 
 
 def hash_query_plan(s):
@@ -32,10 +32,10 @@ def hash_query_plan(s):
     Its important to round floats here, e.g. using 2 decimal places."""
     flattened_result = reduce(operator.concat, s)
     normalized_result = tuple(map(lambda item: round(item, 2) if isinstance(item, float) else item, flattened_result))
-    md5 = hashlib.md5()
+    sha256 = hashlib.sha256()
     for item in normalized_result:
-        md5.update(str(item).encode())
-    return md5.hexdigest()
+        sha256.update(str(item).encode())
+    return sha256.hexdigest()
 
 
 def flatten(l):

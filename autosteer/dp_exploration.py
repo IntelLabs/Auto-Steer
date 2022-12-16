@@ -19,7 +19,7 @@ def register_query_config_and_measurement(query_path, disabled_rules, logical_pl
     is_duplicate = storage.register_query_config(query_path, disabled_rules, logical_plan, plan_hash)
     if is_duplicate:
         logger.info('Plan hash already known')
-    if not initial_call:
+    if not initial_call and timed_result is not None:
         storage.register_measurement(
             query_path,
             disabled_rules,
