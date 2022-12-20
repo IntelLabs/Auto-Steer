@@ -4,7 +4,7 @@ from inference.preprocessing.preprocessor import QueryPlanPreprocessor
 
 
 class DBConnector:
-    """The basic connector class"""
+    """The basic connector class for a database under test"""
 
     class TimedResult:
         def __init__(self, result: str, time: int):
@@ -15,7 +15,7 @@ class DBConnector:
         pass
 
     def connect(self) -> None:
-        """Setup a new connection to the database"""
+        """Set up a new connection to the database"""
         raise NotImplementedError()
 
     def close(self) -> None:
@@ -40,7 +40,7 @@ class DBConnector:
 
     @staticmethod
     def get_plan_preprocessor() -> Type[QueryPlanPreprocessor]:
-        """Return the type of the query plan preprocessor"""
+        """Return the type of the query plan preprocessor. The preprocessor transforms query plans into a form accepted by TCNNs."""
         raise NotImplementedError()
 
     @staticmethod

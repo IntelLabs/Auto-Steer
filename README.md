@@ -9,7 +9,7 @@ This prototype implementation is licensed under the 'MIT license' (see LICENSE).
 ### Packages
 
 - sqlite3
-- python3
+- python3 (at least version 3.10)
 
 ### Python3 requirements
 

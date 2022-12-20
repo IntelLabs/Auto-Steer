@@ -16,7 +16,7 @@ class AutoSteerInferenceException(Exception):
     pass
 
 
-def load_data(bench=None, training_ratio=0.8):
+def _load_data(bench=None, training_ratio=0.8):
     """Load the training and test data for a specific benchmark"""
     training_data, test_data = storage.experience(bench, training_ratio)
 
@@ -28,7 +28,7 @@ def load_data(bench=None, training_ratio=0.8):
     return x_train, y_train, x_test, y_test, training_data, test_data
 
 
-def serialize_data(directory, x_train, y_train, x_test, y_test, training_configs, test_configs):
+def _serialize_data(directory, x_train, y_train, x_test, y_test, training_configs, test_configs):
     if not os.path.exists(directory):
         os.makedirs(directory)
     with open(f'{directory}/x_train', 'wb') as f:
@@ -45,7 +45,7 @@ def serialize_data(directory, x_train, y_train, x_test, y_test, training_configs
         pickle.dump(test_configs, f, pickle.HIGHEST_PROTOCOL)
 
 
-def deserialize_data(directory):
+def _deserialize_data(directory):
     with open(f'{directory}/x_train', 'rb') as f:
         x_train = pickle.load(f)
     with open(f'{directory}/y_train', 'rb') as f:
@@ -61,7 +61,7 @@ def deserialize_data(directory):
     return x_train, y_train, x_test, y_test, training_configs, test_configs
 
 
-def train_and_save_model(preprocessor, filename, x_train, y_train, x_test, y_test):
+def _train_and_save_model(preprocessor, filename, x_train, y_train, x_test, y_test):
     logger.info('training samples: %s, test samples: %s', len(x_train), len(x_test))
 
     if not x_train:
@@ -77,7 +77,7 @@ def train_and_save_model(preprocessor, filename, x_train, y_train, x_test, y_tes
     return regression_model, losses
 
 
-def evaluate_prediction(y, predictions, plans, query_path, is_training) -> PerformancePrediction:
+def _evaluate_prediction(y, predictions, plans, query_path, is_training) -> PerformancePrediction:
     default_plan = list(filter(lambda x: x.num_disabled_rules == 0, plans))[0]
 
     logger.info('y:\t%s', '\t'.join([f'{_:.2f}' for _ in y]))
@@ -100,7 +100,7 @@ def evaluate_prediction(y, predictions, plans, query_path, is_training) -> Perfo
     return PerformancePrediction(default_plan.walltime, plans[min_prediction_index].walltime, best_alt_plan_walltime, query_path, is_training)
 
 
-def choose_best_plans(query_plan_preprocessor, filename: str, test_configs: list[storage.Measurement], is_training: bool) -> list[PerformancePrediction]:
+def _choose_best_plans(query_plan_preprocessor, filename: str, test_configs: list[storage.Measurement], is_training: bool) -> list[PerformancePrediction]:
     """For each query, let the TCNN predict the performance of all query plans and compare them to the runtime of the default plan"""
 
     # load model
@@ -127,7 +127,7 @@ def choose_best_plans(query_plan_preprocessor, filename: str, test_configs: list
         y = [x.walltime for x in plans_and_estimates]
 
         predictions = bao_model.predict(x)
-        performance_prediction = evaluate_prediction(y, predictions, plans_and_estimates, query_path, is_training)
+        performance_prediction = _evaluate_prediction(y, predictions, plans_and_estimates, query_path, is_training)
         performance_predictions.append(performance_prediction)
     return list(reversed(sorted(performance_predictions, key=lambda entry: entry.selected_plan_relative_improvement)))
 
@@ -138,23 +138,23 @@ def train_tcnn(connector, bench: str, retrain: bool, create_datasets: bool):
     data_path = f'nn/data/{connector.get_name()}_data'
 
     if create_datasets:
-        x_train, y_train, x_test, y_test, training_data, test_data = load_data(bench, training_ratio=0.85)
-        serialize_data(data_path, x_train, y_train, x_test, y_test, training_data, test_data)
+        x_train, y_train, x_test, y_test, training_data, test_data = _load_data(bench, training_ratio=0.85)
+        _serialize_data(data_path, x_train, y_train, x_test, y_test, training_data, test_data)
     else:
-        x_train, y_train, x_test, y_test, training_data, test_data = deserialize_data(data_path)
+        x_train, y_train, x_test, y_test, training_data, test_data = _deserialize_data(data_path)
         logger.info('training samples: %s, test samples: %s', len(x_train), len(x_test))
 
     if retrain:
-        _, (training_loss, test_loss) = train_and_save_model(query_plan_preprocessor, model_name, x_train, y_train, x_test, y_test)
+        _, (training_loss, test_loss) = _train_and_save_model(query_plan_preprocessor, model_name, x_train, y_train, x_test, y_test)
         plt.plot(range(len(training_loss)), training_loss, label='training')
         plt.plot(range(len(test_loss)), test_loss, label='test')
         plt.savefig(f'evaluation/losses_1dropout_{DROPOUT}.pdf')
 
     else:
-        x_train, y_train, x_test, y_test, training_data, test_data = deserialize_data(data_path)
+        x_train, y_train, x_test, y_test, training_data, test_data = _deserialize_data(data_path)
 
-    performance_test = choose_best_plans(query_plan_preprocessor, model_name, test_data, is_training=False)
-    performance_training = choose_best_plans(query_plan_preprocessor, model_name, training_data, is_training=True)
+    performance_test = _choose_best_plans(query_plan_preprocessor, model_name, test_data, is_training=False)
+    performance_training = _choose_best_plans(query_plan_preprocessor, model_name, training_data, is_training=True)
 
     # calculate absolute improvements for test and training sets
     def calc_improvements(title: str, dataset: list):

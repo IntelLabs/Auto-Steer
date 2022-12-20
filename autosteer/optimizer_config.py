@@ -13,15 +13,15 @@ def tuple_to_list(t):
 
 
 class HintSetExploration:
-    """An OptimizerConfiguration leverages the efficient exploration of the search space of hint-sets.
-      It uses a dynamic programming-based approach to execute promising hint-sets."""
+    """An OptimizerConfiguration coordinates the exploration of the hint-sets search space.
+      It uses a dynamic programming-based approach to find promising hint-sets."""
 
     def __init__(self, query_path):
         self.query_span = QuerySpan(query_path)
         self.query_path = query_path
         self.tunable_knobs = self.query_span.get_tunable_knobs()  # the effective query optimizer knobs
         self.current_dp_level = 0
-        self.blacklisted_hint_sets = set()  # store configs that resulted in runtimes worse than the baseline
+        self.blacklisted_hint_sets = set()  # store configs that resulted in running times worse than the baseline
         self.hint_sets = self.get_next_hint_sets()
         self.iterator = -1
         logger.info('Run %s different configs', len(self.hint_sets))
@@ -116,7 +116,7 @@ class HintSetExploration:
                 # Leverage hint-sets from n-1 and combine with n=1
                 configs = self.dp_combine(single_optimizers, combinations_previous_run)
             except ArithmeticError as err:
-                logger.info('DP: get_next_hint_sets() results in an ArithmeticError %s', err)
+                logger.warning('DP: get_next_hint_sets() results in an ArithmeticError %s', err)
                 configs = None
         self.current_dp_level += 1
         # Remove these configs where a knob has unmet dependencies (e.g. its dependent optimizers are not part of the config)

@@ -119,7 +119,7 @@ class BaoRegressionModel:
         if isinstance(y_test, list):
             y_test = np.array(y_test)
 
-        # Need to use ast here b/c PostgreSQL's json plans use single quotes, but json lib expects double quotes
+        # Need to use ast here b/c some json plans use single quotes, but json lib expects double quotes
         x_train = [ast.literal_eval(x) if isinstance(x, str) else x for x in x_train]
         x_test = [ast.literal_eval(x) if isinstance(x, str) else x for x in x_test]
 
@@ -198,9 +198,7 @@ class BaoRegressionModel:
         if not isinstance(x, list):
             x = [x]  # x represents one sample only
         x = [ast.literal_eval(x_) if isinstance(x_, str) else x_ for x_ in x]
-
         x = self.__tree_transform.transform(x)
-
         self.__net.eval()
         prediction = self.__net(x).cpu().detach().numpy()
         return self.__pipeline.inverse_transform(prediction)

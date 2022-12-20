@@ -8,7 +8,7 @@ import json
 
 
 class PostgresConnector(DBConnector):
-    """This class handles the connection to the benchmarked PostgreSQL database"""
+    """This class handles the connection to the tested PostgreSQL database"""
 
     def __init__(self):
         super().__init__()

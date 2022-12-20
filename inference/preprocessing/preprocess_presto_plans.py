@@ -1,4 +1,4 @@
-"""Preprocess Presto json query plans before passing them to Bao"""
+"""Preprocess PrestoDB's Json query plans before fitting them into the tree convolutional neural network"""
 import numpy as np
 from utils.custom_logging import logger
 from inference.preprocessing.preprocessor import QueryPlanPreprocessor

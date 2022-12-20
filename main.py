@@ -8,7 +8,7 @@ import connectors.connector
 from connectors import mysql_connector, duckdb_connector, postgres_connector, presto_connector, spark_connector
 from utils.arguments_parser import get_parser
 from utils.custom_logging import logger
-from autosteer.dp_exploration import run_query_with_optimizer_configs
+from autosteer.dp_exploration import explore_optimizer_configs
 from autosteer.query_span import run_get_query_span
 from inference.train import train_tcnn
 
@@ -16,7 +16,7 @@ from inference.train import train_tcnn
 def approx_query_span_and_run(connector: Type[connectors.connector.DBConnector], benchmark: str, query: str):
     run_get_query_span(connector, benchmark, query)
     connector = connector()
-    run_query_with_optimizer_configs(connector, f'{benchmark}/{query}')
+    explore_optimizer_configs(connector, f'{benchmark}/{query}')
 
 
 def inference_mode(connector, benchmark: str, retrain: bool, create_datasets: bool):

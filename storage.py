@@ -250,8 +250,8 @@ def median_runtimes():
     with _db() as conn:
         default_plans_stmt = """SELECT q.query_path, qoc.num_disabled_rules, qoc.disabled_rules, logical_plan_json, elapsed
         FROM queries q,  query_optimizer_configs qoc, measurements m
-        WHERE q.id = qoc.query_id
-          AND qoc.id = m.query_optimizer_config_id"""
+        WHERE q.id = qoc.query_id AND qoc.id = m.query_optimizer_config_id
+        """
         df = pd.read_sql(default_plans_stmt, conn)
         default_median_runtimes = df.groupby(['query_path', 'num_disabled_rules', 'disabled_rules', 'logical_plan_json'])['elapsed'].median().reset_index()
 

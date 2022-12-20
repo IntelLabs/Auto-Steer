@@ -143,7 +143,7 @@ def run_get_query_span(connector_type, benchmark, query):
 
 
 class QuerySpan:
-    """A wrapper class for query spans which are reconstructed from storage."""
+    """A wrapper class for query spans which are reconstructed from (serialized) storage."""
 
     def __init__(self, query_path=None):
         if query_path is not None:

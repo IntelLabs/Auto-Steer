@@ -32,7 +32,7 @@ class DuckDBConnector(DBConnector):
         return DBConnector.TimedResult(str(result), elapsed_time_usecs)
 
     def explain(self, query) -> str:
-        result = self.connection.execute(f'EXPLAIN {query}').fetchone()  # tuple('physical plan', <actual plan>)
+        result = self.connection.execute(f'EXPLAIN {query}').fetchone()
         return result[1]  # return the actual plan
 
     def get_knob(self, knob: str) -> bool:

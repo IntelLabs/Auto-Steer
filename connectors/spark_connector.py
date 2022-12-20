@@ -13,6 +13,12 @@ PLAN_ID = 0
 EXCLUDED_RULES = 'spark.sql.optimizer.excludedRules'
 
 
+def _postprocess_plan(plan) -> str:
+    """Remove random ids from the explained query plan"""
+    pattern = re.compile(r'#\d+L?|\(\d+\)|\[\d+]')
+    return re.sub(pattern, '', plan)
+
+
 class SparkConnector(DBConnector):
     """This class implements the AutoSteer-G connector for a Spark cluster accepting SQL statements"""
 
@@ -57,11 +63,6 @@ class SparkConnector(DBConnector):
         else:
             logger.fatal('SparkConnector cannot find the data directory containing the parquet files')
 
-    def _postprocess_plan(self, plan) -> str:
-        """Remove random ids from the explained query plan"""
-        pattern = re.compile(r'#\d+L?|\(\d+\)|\[\d+]')
-        return re.sub(pattern, '', plan)
-
     def execute(self, query) -> DBConnector.TimedResult:
         begin = time.time_ns()
         collection = self.spark_session.sql(query).collect()
@@ -74,7 +75,7 @@ class SparkConnector(DBConnector):
 
     def explain(self, query) -> str:
         timed_result = self.execute(f'EXPLAIN FORMATTED {query}')
-        return self._postprocess_plan(timed_result.result[0])
+        return _postprocess_plan(timed_result.result[0])
 
     def set_disabled_knobs(self, knobs) -> None:
         """Toggle a list of knobs"""

@@ -30,7 +30,7 @@ def features(x):
 
 
 class BaoNet(nn.Module):
-    """Implementation of the BaoNet neural network model"""
+    """Implementation of the BaoNet neural network model according to Marcus et al. 2020 (Bao: Learning to steer query optimizers)"""
 
     def __init__(self, in_channels):
         super().__init__()
@@ -46,7 +46,6 @@ class BaoNet(nn.Module):
                                        TreeLayerNorm(), DynamicPooling(),
                                        nn.Dropout(DROPOUT),
                                        nn.Linear(64, 32),
-                                       # nn.Dropout(0.5),
                                        nn.LeakyReLU(),
                                        nn.Linear(32, 1))
 
