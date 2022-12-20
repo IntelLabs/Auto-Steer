@@ -20,13 +20,14 @@ class PostgresConnector(DBConnector):
         database = defaults['DB_NAME']
         password = defaults['DB_PASSWORD']
         host = defaults['DB_HOST']
+        self.timeout = defaults['TIMEOUT_MS']
         self.postgres_connection_string = f'postgresql://{user}:{password}@{host}:5432/{database}'
         self.connect()
 
     def connect(self) -> None:
         self.connection = psycopg2.connect(self.postgres_connection_string)
         self.cursor = self.connection.cursor()
-        self.cursor.execute('set statement_timeout to 40000; commit;')
+        self.cursor.execute(f'set statement_timeout to {self.timeout}; commit;')
 
     def close(self) -> None:
         self.cursor.close()
