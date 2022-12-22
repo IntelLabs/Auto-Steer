@@ -115,7 +115,7 @@ class HintSetExploration:
                 combinations_previous_run = self.get_promising_measurements_by_num_rules(n - 1, median, mean)
                 # Leverage hint-sets from n-1 and combine with n=1
                 configs = self.dp_combine(single_optimizers, combinations_previous_run)
-            except ArithmeticError as err:
+            except statistics.StatisticsError as err:
                 logger.warning('DP: get_next_hint_sets() results in an ArithmeticError %s', err)
                 configs = None
         self.current_dp_level += 1

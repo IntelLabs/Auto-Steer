@@ -1,4 +1,6 @@
-WITH default_plans (query_path, running_time) AS
+
+
+WITH default_plans (query_path, walltime) AS
   (SELECT q.query_path,
           median(walltime)
    FROM queries q,
@@ -10,17 +12,16 @@ WITH default_plans (query_path, running_time) AS
      AND qoc.disabled_rules = 'None'
    GROUP BY q.query_path,
             qoc.num_disabled_rules,
-            qoc.disabled_rules
-   HAVING median(elapsed) < 1000000000), -- default for queries that timed out
+            qoc.disabled_rules), -- default for queries that timed out
      results(query_path, num_disabled_rules, runtime, runtime_baseline, savings, disabled_rules, rank) AS
   (SELECT q.query_path,
           qoc.num_disabled_rules,
-          median(m.elapsed),
-          dp.running_time,
-          (dp.running_time - median(m.elapsed)) / dp.running_time AS savings,
+          median(m.walltime),
+          dp.walltime,
+          (dp.walltime * 1.0 - median(m.walltime)) / dp.walltime  AS savings,
           qoc.disabled_rules,
           dense_rank() OVER (PARTITION BY q.query_path
-                             ORDER BY (dp.running_time - median(m.elapsed)) / dp.running_time DESC) AS ranki
+                             ORDER BY (dp.walltime - median(m.walltime)) / dp.walltime DESC) AS ranki
    FROM queries q,
         query_optimizer_configs qoc,
         measurements m,
@@ -32,7 +33,7 @@ WITH default_plans (query_path, running_time) AS
    GROUP BY q.query_path,
             qoc.num_disabled_rules,
             qoc.disabled_rules,
-            dp.running_time
+            dp.walltime
    ORDER BY savings DESC)
 SELECT *
 FROM results
