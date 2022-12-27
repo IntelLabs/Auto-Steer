@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import random
 import socket
+import os
 from datetime import datetime
 from sqlalchemy import create_engine, event
 from sqlalchemy.sql import text
@@ -28,8 +29,14 @@ def _db():
     @event.listens_for(ENGINE, 'connect')
     def connect(dbapi_conn, _):
         """Load SQLite extension for median calculation"""
+        extension_path = './sqlean-extensions/stats.so'
+
+        if not os.path.isfile(extension_path):
+            logger.fatal('Please, first download the required sqlite3 extension using sqlean-extensions/download.sh')
+            exit(1)
+
         dbapi_conn.enable_load_extension(True)
-        dbapi_conn.load_extension('./sqlean-extensions/stats.so')
+        dbapi_conn.load_extension(extension_path)
         dbapi_conn.enable_load_extension(False)
 
     conn = ENGINE.connect()

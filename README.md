@@ -9,6 +9,7 @@ This prototype implementation is licensed under the 'MIT license' (see LICENSE).
 ### Packages
 
 - sqlite3
+    - Statistics extension (we provide a download script: `sqlean-extensions/download.sh`)
 - python3 (at least version 3.10)
 
 ### Python3 requirements
