@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import random
 import socket
+import sys
 import os
 from datetime import datetime
 from sqlalchemy import create_engine, event
@@ -33,7 +34,7 @@ def _db():
 
         if not os.path.isfile(extension_path):
             logger.fatal('Please, first download the required sqlite3 extension using sqlean-extensions/download.sh')
-            exit(1)
+            sys.exit(1)
 
         dbapi_conn.enable_load_extension(True)
         dbapi_conn.load_extension(extension_path)
