@@ -55,7 +55,7 @@ AutoSteer's training mode execution consists of two steps:
    ```commandline
    main.py --inference --database presto --benchmark {path-to-sql-queries}
    ```
-4. The results can be found in the directory `evaluation`.
+4. The inference results can be found in the directory `evaluation`.
 
 ## Code Formatting
 
