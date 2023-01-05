@@ -1,3 +1,6 @@
+# Copyright 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+#
 """Define a custom logger for AutoSteer"""
 import sys
 import logging

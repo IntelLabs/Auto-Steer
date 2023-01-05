@@ -1,3 +1,6 @@
+# Copyright 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+#
 """This module provides the HintSetExploration that runs AutoSteers dynamic-programming based exploration"""
 from autosteer.query_span import QuerySpan
 import storage

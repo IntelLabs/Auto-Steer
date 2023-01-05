@@ -1,3 +1,6 @@
+# Copyright 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+#
 """This module implements AutoSteer's inference mode."""
 import ast
 import numpy as np

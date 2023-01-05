@@ -1,3 +1,6 @@
+# Copyright 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+#
 """This module provides several helper functions to connect to presto server"""
 from typing import Type
 import prestodb

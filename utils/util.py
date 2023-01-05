@@ -1,3 +1,6 @@
+# Copyright 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+#
 """Provide utility functions in this mode"""
 
 import operator

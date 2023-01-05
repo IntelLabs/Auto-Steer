@@ -1,3 +1,6 @@
+# Copyright 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+#
 """This module trains and evaluates tree convolutional neural networks based on AutoSteer's discovered and executed query plans"""
 import os
 import storage

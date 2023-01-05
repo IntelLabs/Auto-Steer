@@ -1,3 +1,6 @@
+# Copyright 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+#
 """Test AutoSteer-G PostgreSQL connector"""
 from connectors.postgres_connector import PostgresConnector
 import unittest

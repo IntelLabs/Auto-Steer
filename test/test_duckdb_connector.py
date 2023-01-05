@@ -1,3 +1,6 @@
+# Copyright 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+#
 """Test AutoSteer-G DuckDB connector"""
 from connectors.duckdb_connector import DuckDBConnector
 import unittest

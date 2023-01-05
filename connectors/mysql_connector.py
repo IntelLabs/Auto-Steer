@@ -1,3 +1,6 @@
+# Copyright 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+#
 """This module provides a connection to the MySql database for benchmarking"""
 import os
 from connectors.connector import DBConnector

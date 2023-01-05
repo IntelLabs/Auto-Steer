@@ -1,3 +1,6 @@
+# Copyright 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+#
 """Implementation of tree convolutional neural networks"""
 import torch
 from torch import nn

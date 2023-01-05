@@ -1,3 +1,6 @@
+# Copyright 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+#
 """Parser for the arguments passed to the benchmark driver"""
 import argparse
 

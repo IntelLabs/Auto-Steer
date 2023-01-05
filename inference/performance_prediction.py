@@ -1,3 +1,6 @@
+# Copyright 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+#
 """This module implements a wrapper class for performance predictions from the TCNN, which is used for visualizations and plots."""
 
 

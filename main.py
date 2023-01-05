@@ -1,3 +1,6 @@
+# Copyright 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+#
 """Run AutoSteer's training mode to explore alternative query plans"""
 from typing import Type
 import storage

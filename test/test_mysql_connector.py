@@ -1,3 +1,6 @@
+# Copyright 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+#
 """Test AutoSteer-G MySQL connector"""
 from connectors.mysql_connector import MySqlConnector
 import unittest

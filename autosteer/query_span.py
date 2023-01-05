@@ -1,3 +1,6 @@
+# Copyright 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+#
 """This module implements a generic but naive approach to approximate the query span. A system integration will be much more efficient."""
 import queue
 from multiprocessing.pool import ThreadPool as Pool

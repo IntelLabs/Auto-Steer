@@ -1,3 +1,6 @@
+# Copyright 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+#
 """Test AutoSteer-G's PrestoDB connector"""
 from connectors.presto_connector import PrestoConnector
 from inference.preprocessing.preprocess_presto_plans import PrestoPlanPreprocessor

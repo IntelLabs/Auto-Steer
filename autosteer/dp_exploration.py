@@ -1,3 +1,6 @@
+# Copyright 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+#
 """This module coordinates the query span approximation and the generation of new optimizer configurations for a query"""
 import connectors.connector
 import storage

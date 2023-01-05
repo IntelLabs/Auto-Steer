@@ -1,3 +1,6 @@
+# Copyright 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+#
 """This module provides a connection to the PostgreSQL database for benchmarking"""
 import time
 from connectors.connector import DBConnector

@@ -1,3 +1,6 @@
+# Copyright 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+#
 """Test AutoSteer-G SparkSQL connector"""
 from connectors.spark_connector import SparkConnector
 import unittest

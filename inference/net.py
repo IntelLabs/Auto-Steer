@@ -1,3 +1,6 @@
+# Copyright 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+#
 """Wrapper class for the tree convolution neural network used to implement the bandit optimizer (Bao)"""
 from torch import nn
 from inference.tree_conv.tcnn import BinaryTreeConv, TreeLayerNorm

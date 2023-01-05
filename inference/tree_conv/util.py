@@ -1,3 +1,6 @@
+# Copyright 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+#
 """Provide utility functions to transform query plans to feature vectors"""
 import numpy as np
 import torch

@@ -1,3 +1,6 @@
+# Copyright 2022 Intel Corporation
+# SPDX-License-Identifier: MIT
+#
 """This module provides a connection to a Spark cluster that is used for benchmarking"""
 import pyspark
 from pyspark.sql import SparkSession
