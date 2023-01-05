@@ -1,4 +1,4 @@
-# AutoSteer
+# Auto-Steer
 
 ## License
 
@@ -16,11 +16,11 @@ This prototype implementation is licensed under the 'MIT license' (see LICENSE).
 
 - Install python requirements using the file `pip3 install -r requirements.txt`
 
-## Run AutoSteer
+## Run Auto-Steer
 
 ### Database Systems
 
-#### AutoSteer-G already supports five open-source database systems:
+#### Auto-Steer-G already supports five open-source database systems:
 
 - PostgreSQL
     - We tested AutoSteer with PostgreSQL 13
@@ -41,15 +41,15 @@ This prototype implementation is licensed under the 'MIT license' (see LICENSE).
 
 Depending on your custom installation and DBMS setup, add the required information to the `configs/<dbms>.cfg`-file.
 
-### Executing AutoSteer's Training Mode
+### Executing Auto-Steer's Training Mode
 
-AutoSteer's training mode execution consists of two steps:
+Auto-Steer's training mode execution consists of two steps:
 
 1. (A) Approximate the query span, and (B) run the dynamic programming-based hint-set exploration
    ```commandline
    main.py --training --database {postgres|presto|mysql|duckdb|spark} --benchmark {path-to-sql-queries}
    ```
-2. By now, AutoSteer persisted all generated training data (e.g. query plans and execution statistics) in a
+2. By now, Auto-Steer persisted all generated training data (e.g. query plans and execution statistics) in a
    sqlite-database that can be found under `results/<database>.sqlite`.
 3. For PrestoDB query plans, we implemented the preprocessing of query plans for tree convolutional neural networks.
    ```commandline
