@@ -63,3 +63,17 @@ Auto-Steer's training mode execution consists of two steps:
   the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html).
   However, it allows longer lines (160 characters).
 - Please, install and run pylint (there is also a git pre-commit hook) before committing
+
+## Cite
+If you use AutoSteer in your work, please cite us:
+```
+@article{autosteer2023,
+    author       = {Anneser, Christoph and Tatbul, Nesime and Cohen, David and Xu, Zhenggang and Pandian, Prithviraj and Laptev, Nikolay and Marcus, Ryan},
+    date         = {2023},
+    journaltitle = {PVLDB},
+    number       = {12},
+    pages        = {3515--3527},
+    title        = {AutoSteer: Learned Query Optimization for Any SQL Database},
+    volume       = {16},
+}
+```
