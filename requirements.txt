@@ -19,7 +19,7 @@ nvidia-cudnn-cu11==8.5.0.96
 packaging==22.0
 pandas==1.5.2
 pandasql==0.7.3
-Pillow==9.3.0
+Pillow==10.0.1
 presto-python-client==0.8.3
 prettytable==3.5.0
 protobuf==3.20.2
