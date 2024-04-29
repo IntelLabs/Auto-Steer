@@ -6,7 +6,7 @@ cycler==0.11.0
 duckdb==0.6.1
 fonttools==4.43.0
 greenlet==2.0.1
-idna==3.4
+idna==3.7
 joblib==1.2.0
 kiwisolver==1.4.4
 matplotlib==3.6.2
@@ -19,7 +19,7 @@ nvidia-cudnn-cu11==8.5.0.96
 packaging==22.0
 pandas==1.5.2
 pandasql==0.7.3
-Pillow==10.0.1
+Pillow==10.3.0
 presto-python-client==0.8.3
 prettytable==3.5.0
 protobuf==3.20.2
