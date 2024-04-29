@@ -6,7 +6,7 @@ cycler==0.11.0
 duckdb==0.6.1
 fonttools==4.43.0
 greenlet==2.0.1
-idna==3.4
+idna==3.7
 joblib==1.2.0
 kiwisolver==1.4.4
 matplotlib==3.6.2
