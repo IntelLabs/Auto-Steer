@@ -8,7 +8,7 @@
 [MASTER]
 
 [pre-commit-hook]
-limit=10.0
+limit=10
 
 # Files or directories to be skipped. They should be base names, not paths.
 ignore=third_party
